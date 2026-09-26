@@ -1,0 +1,8 @@
+# Testo: a capo normalizzati. File binari: mai modificati.
+* text=auto
+*.pdf binary
+*.jpg binary
+*.jpeg binary
+*.png binary
+*.ogg binary
+*.xlsx binary

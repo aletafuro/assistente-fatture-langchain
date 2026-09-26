@@ -1,0 +1,20 @@
+# --- SEGRETI: non devono MAI finire nel repository ---
+.env
+segreti/
+*credenziali*.json
+*token*.json
+client_secret*.json
+
+# --- dati di esercizio (registro reale, bozze, file ricevuti, riepiloghi) e log ---
+dati/
+log/
+
+# --- Python ---
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# --- editor ---
+.idea/
+.vscode/
