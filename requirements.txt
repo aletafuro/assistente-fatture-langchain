@@ -14,3 +14,10 @@ google-auth==2.58.1
 google-auth-oauthlib==1.4.1
 openpyxl==3.1.5
 tzdata==2026.3
+
+# --- solo per la versione 2 (codice_v2/) ---
+mcp==1.30.0
+langchain-mcp-adapters==0.3.2
+langgraph-checkpoint-sqlite==3.1.1
+aiosqlite==0.22.1
+langchain-community==0.4.2      # solo per il conteggio di chiamate e token nel confronto v1/v2

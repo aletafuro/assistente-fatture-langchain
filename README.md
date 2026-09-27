@@ -2,7 +2,29 @@
 
 Assistente **agentico** su Telegram per le fatture fornitori di una piccola impresa: riceve le fatture come **foto, PDF, messaggi vocali o testo**, ne estrae i dati con l'aiuto dell'utente, le archivia su **Google Drive**, le registra, le controlla e invia i riepiloghi al **commercialista**.
 
-Realizzato con **LangChain** (`create_agent`) e Python.
+Realizzato con **LangChain** e **LangGraph** in Python, in due versioni.
+
+## Versioni
+
+| | **v1** — `codice/` | **v2** — `codice_v2/` |
+|---|---|---|
+| Idea | un agente (`create_agent`) gestisce tutto, bozze comprese | percorso delle bozze **scritto nel codice** (grafo LangGraph); agente solo per le richieste libere |
+| Percorso delle bozze | deciso dall'LLM, guidato da system prompt e middleware | **grafo** con `interrupt`: estrai → controlla → chiedi il mancante → conferma → (doppia conferma) → registra |
+| Memoria | conversazione in RAM (persa al riavvio); bozze su file | stato del grafo e conversazioni su **SQLite**: una domanda resta in sospeso anche dopo un riavvio |
+| Registro | tool interni | **server MCP in sola lettura** (usabile anche da Claude, Cursor…) + tool di scrittura locali |
+| Contenuto delle fatture | — | **RAG**: "chi mi ha venduto il toner?" |
+| Smistamento | — | **router**: fattura nuova → grafo, tutto il resto → agente |
+| Confronto misurato (7 scenari × 3) | 18/21 corretti · 5,7 chiamate LLM · 13.916 token | **21/21** corretti · **2,0** chiamate · **1.221** token |
+
+La v1 è la versione consegnata come progetto (tag git **`v1-consegna`**) e resta invariata; la v2 ne **riusa** i moduli (registro, estrazione, controlli, Google, avvisi). Dettagli e risultati: [`RELAZIONE.md`](RELAZIONE.md) (v1), [`RELAZIONE_V2.md`](RELAZIONE_V2.md) (v2 e confronto), [`valutazione/CONFRONTO_V1_V2.md`](valutazione/CONFRONTO_V1_V2.md).
+
+Stesso bot Telegram per entrambe: **non avviarle insieme** (Telegram consegna i messaggi a una sola copia).
+
+```bash
+python codice/bot_telegram.py          # v1
+python codice_v2/bot_telegram_v2.py    # v2
+python codice_v2/confronto_v1_v2.py 3  # confronto misurato (dati temporanei, nessun invio)
+```
 
 ---
 
