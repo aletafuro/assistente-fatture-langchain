@@ -8,6 +8,7 @@ Python li converte in centesimi interi e in date AAAA-MM-GG e fa tutti i control
 
 import json
 import logging
+import re
 from datetime import datetime
 from decimal import Decimal
 from pathlib import Path
@@ -79,6 +80,10 @@ def euro_in_centesimi(testo: Optional[str]) -> Optional[int]:
     pulito = testo.replace("€", "").replace(" ", "").strip()
     if "," in pulito:                       # formato italiano: 1.200,00
         pulito = pulito.replace(".", "").replace(",", ".")
+    elif re.fullmatch(r"\d{1,3}(\.\d{3})+", pulito):
+        # "6.100" o "1.500.000" senza virgola: il punto separa le MIGLIAIA, non i decimali
+        # (prima "6.100 euro" veniva letto come 6,10 €).
+        pulito = pulito.replace(".", "")
     return int(Decimal(pulito) * 100)
 
 

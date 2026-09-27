@@ -1,6 +1,6 @@
 # Valutazione dell'estrazione — golden set
 
-Eseguita il 26/09/2026 11:21 · 14 fatture · 3 giri · 42 estrazioni · durata 0.9 minuti.
+Eseguita il 27/09/2026 10:32 · 14 fatture · 3 giri · 42 estrazioni · durata 0.9 minuti.
 Una fattura è **corretta** solo se **tutti i 9 campi** coincidono con i dati attesi (fornitore, partita IVA, numero, data emissione, data scadenza, imponibile, IVA, totale, regime IVA).
 
 ## Risultato per canale

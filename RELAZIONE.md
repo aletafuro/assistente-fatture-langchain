@@ -283,7 +283,10 @@ Il percorso per arrivare al 100% fa parte dei risultati:
 10. **Ambiguità del linguaggio.** Una frase come "a chi ho dato di più" può voler dire "pagato" o "fatturato".
     → Regola del prompt: nel dubbio chiedere invece di indovinare.
 
-11. **Limiti ancora aperti:**
+11. **Importi "tondi" senza centesimi (trovato dopo la consegna).** Una fattura dettata come "totale 6.100 euro" veniva convertita in 6,10 €: senza virgola, il punto era trattato come separatore dei decimali anziché delle migliaia. Il golden set non lo aveva fatto emergere perché tutti i suoi importi hanno i centesimi ("1.200,00"). Il problema è venuto fuori provando una regola sulla soglia di 5.000 €: la fattura da 6.100 € non la superava.
+    → `euro_in_centesimi` riconosce ora il formato con i soli punti delle migliaia ("6.100", "1.500.000"), lasciando invariati i casi con decimali ("12.50" = 12,50 €). Dopo la correzione la valutazione resta 42/42. Lezione: un golden set va arricchito anche con i formati "scomodi", non solo con quelli dei documenti di partenza.
+
+12. **Limiti ancora aperti:**
     - le partite IVA di prova sono fittizie e non superano la cifra di controllo ufficiale. Con fatture reali si potrebbe aggiungere quel controllo;
     - la memoria della conversazione si azzera al riavvio del bot (bozze e registro no). Un checkpointer su database la renderebbe persistente;
     - l'app Google è in modalità test (avviso "app non verificata"; gli utenti vanno aggiunti a mano);
