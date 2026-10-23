@@ -9,7 +9,7 @@ Python li converte in centesimi interi e in date AAAA-MM-GG e fa tutti i control
 import json
 import logging
 import re
-from datetime import datetime
+from datetime import date, datetime
 from decimal import ROUND_HALF_UP, Decimal
 from pathlib import Path
 from typing import Literal, Optional
@@ -36,8 +36,10 @@ ISTRUZIONI_ESTRAZIONE = (
     "Attenzione: nelle fatture compare sia il fornitore (chi emette) sia il cliente (chi riceve): "
     "i campi fornitore, partita_iva, paese_fornitore e indirizzo_fornitore riguardano SOLO il fornitore. "
     f"{_CLIENTE}"
-    "Nelle fatture in inglese il fornitore è chi emette la 'Invoice' (spesso in alto o nel piè di pagina "
-    "con 'VAT REG', 'VAT number', 'Tax ID'); il cliente è in 'Bill to', 'Customer', 'Sold to'. "
+    "Nelle fatture in inglese il fornitore è chi emette la 'Invoice'; il cliente è in 'Bill to', 'Customer', "
+    "'Sold to'. La partita IVA del fornitore può essere in alto, nell'intestazione, ma spesso è nel PIÈ DI "
+    "PAGINA ('VAT REG', 'VAT number', 'Tax ID', 'USt-IdNr', 'TVA'): cercala in tutto il documento, fino in fondo. "
+    "Un fornitore extra-UE può avere una partita IVA europea (di un suo rappresentante in Europa): usa quella. "
     "Non inventare mai: se un dato non è presente, lascialo vuoto."
 )
 
@@ -56,21 +58,29 @@ class DatiFattura(BaseModel):
     paese_fornitore: Optional[str] = Field(
         default=None,
         description="Paese del FORNITORE come codice ISO di 2 lettere (IT, NL, IE, DE, FR, GB, US, CH...), "
-                    "dedotto dall'indirizzo del fornitore o dal prefisso della sua partita IVA.")
+                    "dedotto dall'INDIRIZZO della sede del fornitore. Attenzione: una società estera può avere "
+                    "una partita IVA italiana o europea (es. una compagnia aerea inglese con P.IVA IT): "
+                    "il paese resta quello dell'indirizzo, non quello della partita IVA.")
     indirizzo_fornitore: Optional[str] = Field(
         default=None,
         description="Indirizzo del FORNITORE su una riga (via, CAP, città, paese), copiato come scritto.")
     valuta: Optional[str] = Field(
         default=None,
         description="Valuta degli importi come codice ISO di 3 lettere (EUR, USD, GBP, CHF...). "
-                    "€ = EUR, $ = USD (salvo indicazione diversa), £ = GBP.")
+                    "€ = EUR, $ = USD (salvo indicazione diversa), £ = GBP. Copia il codice che vedi sulla "
+                    "fattura (es. 'CSK' o 'Kč' per le corone ceche): non sostituirlo con un'altra valuta.")
     numero: Optional[str] = Field(
         default=None,
         description="Numero della fattura, copiato esattamente come scritto (es. '2026/037').")
     data_emissione: Optional[str] = Field(
         default=None,
         description="Data di emissione copiata ESATTAMENTE come scritta, senza cambiarne il formato "
-                    "(es. '12/03/2025' oppure '2026-06-10').")
+                    "(es. '12/03/2025' oppure '2026-06-10'). Se la fattura non ha una data di emissione, lascia "
+                    "vuoto: NON usare la data di scadenza né altre date.")
+    fine_periodo: Optional[str] = Field(
+        default=None,
+        description="Se la fattura indica un periodo di fatturazione (es. 'billing period August 1, 2026 - "
+                    "September 1, 2026'), la data di FINE periodo copiata come scritta. Altrimenti vuoto.")
     data_scadenza: Optional[str] = Field(
         default=None,
         description="Data di scadenza del pagamento copiata ESATTAMENTE come scritta. "
@@ -86,12 +96,44 @@ class DatiFattura(BaseModel):
         default=None,
         description="Totale documento (IVA inclusa) copiato come scritto, es. '1.464,00'. "
                     "Non l'eventuale 'importo dovuto' al netto di trattenute. Senza simbolo di valuta.")
+    tipo_documento: Literal["fattura", "nota_di_credito", "altro"] = Field(
+        default="fattura",
+        description="'fattura' (anche 'Invoice', 'Receipt' di un acquisto); 'nota_di_credito' se è una nota di "
+                    "credito / credit note / rimborso; 'altro' se NON è una fattura (contabile di bonifico, "
+                    "avviso di parcella, preventivo, guida, estratto conto).")
+    metodo_pagamento: Optional[str] = Field(
+        default=None,
+        description="Come è stata pagata, se è scritto: es. 'American Express 2007', 'Visa 1234', "
+                    "'Mastercard 3978', 'bonifico', 'PayPal'. Con le ultime cifre della carta se ci sono.")
     regime_iva: Literal["ordinario", "inversione_contabile", "aliquota_ridotta", "esente"] = Field(
         description="'ordinario' se IVA al 22%; 'inversione_contabile' se reverse charge; "
                     "'aliquota_ridotta' se IVA al 4%, 5% o 10%; 'esente' se esente/non imponibile.")
 
 
 logging.getLogger("pypdf").setLevel(logging.ERROR)   # niente messaggi tecnici di pypdf a video
+
+
+# ---------------------------------------------------------------------------
+# FATTURE ELETTRONICHE ITALIANE (formato ministeriale SDI)
+# ---------------------------------------------------------------------------
+def formato_sdi(testo: str) -> bool:
+    """Le fatture italiane stampate dallo SDI hanno sempre queste due sezioni; quelle estere mai."""
+    return "Cedente/prestatore" in testo and "Cessionario/committente" in testo
+
+
+def scadenze_sdi(testo: str) -> list:
+    """
+    Dalla sezione 'Scadenze' del formato SDI. Due casi:
+      'Data scadenza 30-11-2026'            -> 2026-11-30
+      'Data termine 15-09-2026 46gg'        -> 15/09 + 46 giorni = 2026-10-31
+    (la seconda forma l'abbiamo vista su una fattura vera: il modello avrebbe preso il 15/09 come scadenza).
+    """
+    from datetime import timedelta
+    risultato = []
+    for data, giorni in re.findall(r"Data (?:termine|scadenza)\s+(\d{2}[-/]\d{2}[-/]\d{4})(?:\s+(\d+)\s*gg)?", testo):
+        base = datetime.strptime(data.replace("/", "-"), "%d-%m-%Y")
+        risultato.append((base + timedelta(days=int(giorni or 0))).strftime("%Y-%m-%d"))
+    return risultato
 
 
 def pulisci_testo_pdf(testo: str) -> str:
@@ -170,11 +212,19 @@ def normalizza_data(testo: Optional[str], paese: Optional[str] = None) -> Option
     # Date a parole: "22 settembre 2026", "1 September 2026", "September 1, 2026", "01-Sep-2026", "1st Sep 2026"
     parole = [p.strip(".") for p in
               re.sub(r"(\d)(st|nd|rd|th)\b", r"\1", testo.lower().replace(",", " ").replace("-", " ")).split()]
-    if len(parole) == 3:
+    # Si convertono direttamente in AAAA-MM-GG: la regola americana (mese/giorno) vale solo per le date
+    # scritte con le cifre. Prima "21 settembre 2026" di un fornitore USA diventava 21/9 e poi "mese 21".
+    if len(parole) == 3 and parole[2].isdigit():
+        giorno_mese = None
         if _numero_mese(parole[1]) and parole[0].isdigit():          # giorno mese anno
-            testo = f"{parole[0]}/{_numero_mese(parole[1])}/{parole[2]}"
+            giorno_mese = (int(parole[0]), _numero_mese(parole[1]))
         elif _numero_mese(parole[0]) and parole[1].isdigit():        # mese giorno anno (inglese)
-            testo = f"{parole[1]}/{_numero_mese(parole[0])}/{parole[2]}"
+            giorno_mese = (int(parole[1]), _numero_mese(parole[0]))
+        if giorno_mese:
+            try:
+                return date(int(parole[2]), giorno_mese[1], giorno_mese[0]).isoformat()
+            except ValueError:
+                return None
     formati = ["%Y-%m-%d", "%d/%m/%Y", "%d-%m-%Y", "%d.%m.%Y", "%d/%m/%y"]
     if (paese or "").upper() == "US" and re.fullmatch(r"\d{1,2}/\d{1,2}/\d{2,4}", testo):
         formati = ["%m/%d/%Y", "%m/%d/%y"]
@@ -183,6 +233,10 @@ def normalizza_data(testo: Optional[str], paese: Optional[str] = None) -> Option
             return datetime.strptime(testo, formato).strftime("%Y-%m-%d")
         except ValueError:
             pass
+    # "09/30/2026": il 30 non può essere un mese, quindi è per forza mese/giorno (data all'americana)
+    m = re.fullmatch(r"(\d{1,2})/(\d{1,2})/(\d{4})", testo)
+    if m and int(m.group(2)) > 12 >= int(m.group(1)):
+        return date(int(m.group(3)), int(m.group(1)), int(m.group(2))).isoformat()
     return None   # formato sconosciuto: meglio vuoto (e chiederlo) che sbagliato
 
 
@@ -267,9 +321,23 @@ def controlla_coerenza(imponibile_cent, iva_cent, totale_cent) -> bool:
     return imponibile_cent + iva_cent == totale_cent
 
 
+def _per_forza_americana(testo: Optional[str]) -> bool:
+    m = re.fullmatch(r"\s*(\d{1,2})/(\d{1,2})/(\d{4})\s*", testo or "")
+    return bool(m) and int(m.group(2)) > 12 >= int(m.group(1))
+
+
+def pulisci_numero(testo: Optional[str]) -> Optional[str]:
+    """'1 - 09/08/2026' -> '1': a volte il modello attacca la data al numero della fattura."""
+    testo = vuoto_se_niente(testo)
+    if testo is None:
+        return None
+    return re.sub(r"\s*[-–]\s*\d{1,2}[/.]\d{1,2}[/.]\d{2,4}\s*$", "", testo).strip() or None
+
+
 def normalizza_valuta(testo: Optional[str]) -> Optional[str]:
     testo = (vuoto_se_niente(testo) or "").upper()
-    testo = {"€": "EUR", "$": "USD", "£": "GBP", "EURO": "EUR", "DOLLARI": "USD", "STERLINE": "GBP"}.get(testo, testo)
+    testo = {"€": "EUR", "$": "USD", "£": "GBP", "EURO": "EUR", "DOLLARI": "USD", "STERLINE": "GBP",
+             "CSK": "CZK", "KČ": "CZK", "KC": "CZK", "ZŁ": "PLN", "FR.": "CHF"}.get(testo, testo)
     return testo if re.fullmatch(r"[A-Z]{3}", testo) else None
 
 
@@ -278,24 +346,32 @@ def in_dizionario(nome_file: str, dati: DatiFattura) -> dict:
     Gli importi restano nella VALUTA DELLA FATTURA: la conversione in euro (cambio BdI del giorno
     della fattura) la fa Python dopo, in cambi_bdi.py."""
     partita_iva, paese = normalizza_piva(dati.partita_iva, dati.paese_fornitore)
+    # Se una data della fattura è per forza all'americana ("09/30/2026"), lo sono tutte: altrimenti
+    # la scadenza "10/07/2026" (7 ottobre) diventava il 10 luglio, prima della data della fattura.
+    formato_date = "US" if any(_per_forza_americana(d) for d in (dati.data_emissione, dati.data_scadenza,
+                                                                  dati.fine_periodo)) else paese
     valuta = normalizza_valuta(dati.valuta)
     if valuta is None and paese == "IT":
         valuta = "EUR"
     return {
+        "_grezzo": dati.model_dump(),      # risposta del modello così com'è (si salva per non richiederla)
         "file": nome_file,
         # "Rossi S.p.A ." -> "Rossi S.p.A.": il PDF a volte lascia spazi prima della punteggiatura
         "fornitore": re.sub(r"\s+([.,])", r"\1", vuoto_se_niente(dati.fornitore) or "") or None,
         "partita_iva": partita_iva,
         "paese_fornitore": paese,
         "indirizzo_fornitore": vuoto_se_niente(dati.indirizzo_fornitore),
-        "numero": vuoto_se_niente(dati.numero),
-        "data_emissione": normalizza_data(dati.data_emissione, paese),
-        "data_scadenza": normalizza_data(dati.data_scadenza, paese),
+        "numero": pulisci_numero(dati.numero),
+        "data_emissione": normalizza_data(dati.data_emissione, formato_date),
+        "fine_periodo": normalizza_data(dati.fine_periodo, formato_date),
+        "data_scadenza": normalizza_data(dati.data_scadenza, formato_date),
         "valuta": valuta,
         "imponibile_cent": euro_in_centesimi(vuoto_se_niente(dati.imponibile)),
         "iva_cent": euro_in_centesimi(vuoto_se_niente(dati.iva)),
         "totale_cent": euro_in_centesimi(vuoto_se_niente(dati.totale)),
         "regime_iva": dati.regime_iva,
+        "tipo_documento": dati.tipo_documento,
+        "metodo_pagamento": vuoto_se_niente(dati.metodo_pagamento),
     }
 
 

@@ -101,3 +101,45 @@ def test_trattino_codificato_come_carattere_nullo():
     assert pulisci_testo_pdf("Invoice number 9BF0758D\x005703622\nDate") == "Invoice number 9BF0758D-5703622\nDate"
     assert pulisci_testo_pdf("IN\x0079313654") == "IN-79313654"
     assert pulisci_testo_pdf("fine\x00") == "fine"
+
+
+def test_data_a_parole_di_un_fornitore_americano():
+    # Errore trovato sulle fatture vere: la regola mese/giorno veniva applicata anche alle date a parole.
+    assert normalizza_data("21 settembre 2026", "US") == "2026-09-21"
+    assert normalizza_data("September 21, 2026", "US") == "2026-09-21"
+
+
+def test_data_americana_riconosciuta_anche_senza_paese():
+    assert normalizza_data("09/30/2026", "GB") == "2026-09-30"     # il 30 non può essere un mese
+    assert normalizza_data("09/10/2026", "GB") == "2026-10-09"     # ambigua: resta giorno/mese
+
+
+def test_codice_vecchio_della_corona_ceca():
+    assert normalizza_valuta("CSK") == "CZK"
+
+
+def test_numero_con_la_data_attaccata():
+    from fatture_comuni import pulisci_numero
+    assert pulisci_numero("1 - 09/08/2026") == "1"
+    assert pulisci_numero("2026-0089") == "2026-0089"
+
+
+def test_se_una_data_e_americana_lo_sono_tutte():
+    # Fattura vera: emissione "09/30/2026", scadenza "10/07/2026" (7 ottobre, non 10 luglio).
+    from fatture_comuni import DatiFattura, in_dizionario
+    d = in_dizionario("f.pdf", DatiFattura(fornitore="Rossi Ltd", paese_fornitore="GB", data_emissione="09/30/2026",
+                                           data_scadenza="10/07/2026", regime_iva="esente"))
+    assert d["data_emissione"] == "2026-09-30" and d["data_scadenza"] == "2026-10-07"
+
+
+def test_la_risposta_salvata_del_modello_si_riusa_senza_richiamarlo(monkeypatch):
+    import estrazione
+    from fatture_comuni import DatiFattura
+    grezzo = DatiFattura(fornitore="Rossi S.r.l.", numero="7", data_emissione="1 September 2026",
+                         totale="1,200.00", regime_iva="ordinario").model_dump()
+
+    def vietato(*a, **k):
+        raise AssertionError("non deve chiamare il modello")
+    monkeypatch.setattr(estrazione, "_chain_testo", type("C", (), {"invoke": vietato})())
+    d = estrazione.estrai_da_testo("testo qualsiasi", "f.pdf", grezzo=grezzo)
+    assert d["data_emissione"] == "2026-09-01" and d["totale_cent"] == 120000

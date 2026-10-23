@@ -213,6 +213,11 @@ def abbina(fattura: dict, movimenti: list, alias: Optional[dict] = None, gia_usa
     candidati = [m for m in movimenti if id(m) not in gia_usati and m.importo_valuta is not None
                  and m.valuta == fattura["valuta"] and m.importo_valuta == importo]
     if not candidati:
+        # Valuta letta male (in prova: "CSK" sulla fattura, letto come GBP): stesso importo e stesso fornitore
+        # bastano, e la valuta giusta è quella del movimento.
+        candidati = [m for m in movimenti if id(m) not in gia_usati and m.importo_valuta == importo
+                     and stesso_fornitore(fattura["fornitore"], m.descrizione, alias)]
+    if not candidati:
         return None
     nome_ok = [m for m in candidati if stesso_fornitore(fattura["fornitore"], m.descrizione, alias)]
     scelti = nome_ok or (candidati if len(candidati) == 1 else [])

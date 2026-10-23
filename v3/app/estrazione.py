@@ -18,7 +18,8 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.prompts import ChatPromptTemplate
 
 import avvisi
-from fatture_comuni import ISTRUZIONI_ESTRAZIONE, DatiFattura, in_dizionario, leggi_pdf
+from fatture_comuni import (ISTRUZIONI_ESTRAZIONE, DatiFattura, formato_sdi, in_dizionario, leggi_pdf,
+                            scadenze_sdi)
 
 FORMATI_IMMAGINE = {".jpg": "jpeg", ".jpeg": "jpeg", ".png": "png"}
 
@@ -43,22 +44,53 @@ def _servizio_non_disponibile(errore: Exception) -> ErroreEstrazione:
                             "Riprova tra qualche minuto: non è andato perso niente.")
 
 
-def estrai_da_testo(testo: str, nome: str = "testo") -> dict:
+def estrai_da_testo(testo: str, nome: str = "testo", grezzo: dict = None) -> dict:
+    """grezzo = risposta del modello già salvata: si rifanno solo le conversioni Python, senza chiamarlo."""
+    if grezzo is not None:
+        return in_dizionario(nome, DatiFattura(**grezzo))
     try:
         return in_dizionario(nome, _chain_testo.invoke({"testo": testo}))
     except Exception as errore:
         raise _servizio_non_disponibile(errore)
 
 
-def estrai_da_pdf(percorso: Path) -> dict:
+def estrai_da_pdf(percorso: Path, grezzo: dict = None) -> dict:
     try:
         testo = leggi_pdf(percorso)
     except Exception:
         raise ErroreEstrazione(f"Non riesco ad aprire il PDF {percorso.name}: il file potrebbe essere danneggiato.")
     if not testo.strip():
-        raise ErroreEstrazione(f"Il PDF {percorso.name} non contiene testo (forse è una scansione): "
-                               "mandamelo come foto.")
-    return estrai_da_testo(testo, percorso.name)
+        return _estrai_da_scansione(percorso, grezzo)
+    dati = estrai_da_testo(testo, percorso.name, grezzo)
+    # Fattura elettronica italiana (formato SDI): paese e scadenza li stabilisce Python, non il modello.
+    dati["formato_sdi"] = formato_sdi(testo)
+    if dati["formato_sdi"]:
+        dati["paese_fornitore"] = dati.get("paese_fornitore") or "IT"
+        scadenze = scadenze_sdi(testo)
+        if scadenze:
+            dati["data_scadenza"] = max(scadenze)      # più rate: l'ultima (le rate si vedono nelle note)
+            dati["scadenze_sdi"] = scadenze
+    return dati
+
+
+def _estrai_da_scansione(percorso: Path, grezzo: dict = None) -> dict:
+    """PDF senza testo (scansione): si estrae l'immagine della prima pagina e la si legge come una foto."""
+    import tempfile
+    from pypdf import PdfReader
+    try:
+        immagini = PdfReader(percorso).pages[0].images
+    except Exception:
+        immagini = []
+    for immagine in immagini:
+        estensione = Path(immagine.name).suffix.lower()
+        if estensione in (".jpg", ".jpeg", ".png"):
+            temporaneo = Path(tempfile.mkdtemp()) / f"pagina1{estensione}"
+            temporaneo.write_bytes(immagine.data)
+            dati = estrai_da_foto(temporaneo, grezzo)
+            dati["file"] = percorso.name
+            return dati
+    raise ErroreEstrazione(f"Il PDF {percorso.name} è una scansione che non riesco a leggere: "
+                           "mandamelo come foto.")
 
 
 # Ogni formato di immagine inizia con dei byte fissi ("firma"): se non ci sono, il file è rotto
@@ -66,7 +98,9 @@ def estrai_da_pdf(percorso: Path) -> dict:
 FIRME_IMMAGINE = {"jpeg": b"\xff\xd8\xff", "png": b"\x89PNG\r\n\x1a\n"}
 
 
-def estrai_da_foto(percorso: Path) -> dict:
+def estrai_da_foto(percorso: Path, grezzo: dict = None) -> dict:
+    if grezzo is not None:
+        return in_dizionario(percorso.name, DatiFattura(**grezzo))
     tipo = FORMATI_IMMAGINE[percorso.suffix.lower()]
     contenuto = percorso.read_bytes()
     if not contenuto.startswith(FIRME_IMMAGINE[tipo]):
@@ -85,14 +119,14 @@ def estrai_da_foto(percorso: Path) -> dict:
         raise _servizio_non_disponibile(errore)
 
 
-def estrai_da_file(percorso: Path) -> dict:
+def estrai_da_file(percorso: Path, grezzo: dict = None) -> dict:
     """Sceglie da solo il metodo giusto guardando l'estensione del file."""
     percorso = Path(percorso)
     if not percorso.exists():
         raise ErroreEstrazione(f"Il file {percorso} non esiste.")
     estensione = percorso.suffix.lower()
     if estensione == ".pdf":
-        return estrai_da_pdf(percorso)
+        return estrai_da_pdf(percorso, grezzo)
     if estensione in FORMATI_IMMAGINE:
-        return estrai_da_foto(percorso)
+        return estrai_da_foto(percorso, grezzo)
     raise ErroreEstrazione(f"Formato {estensione} non supportato: mandami un PDF, una foto JPG/PNG o scrivimi i dati.")
