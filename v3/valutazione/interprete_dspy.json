@@ -1,0 +1,171 @@
+{
+  "traces": [],
+  "train": [],
+  "demos": [
+    {
+      "domanda": "Ecco i dati della fattura:\n- Fornitore: Rossi S.r.l. (IT) - P.IVA 01234567897\n- Fattura n. 45 del 2026-09-01, scadenza 2026-10-01\n- Imponibile 1.200,00 EUR + IVA 264,00 EUR = totale 1.464,00 EUR\n\nLa registro? Puoi anche correggere un dato (es. \"la scadenza è il 30/10/2026\") o annullare.",
+      "campo_atteso": "nessuno",
+      "risposta": "aspetta un attimo che controllo",
+      "azione": "altro",
+      "campo": null,
+      "valore": null
+    },
+    {
+      "domanda": "Non trovo il numero della fattura: me lo dici?",
+      "campo_atteso": "numero",
+      "risposta": "il numero è INV-2026-0042",
+      "azione": "valore",
+      "campo": "numero",
+      "valore": "INV-2026-0042"
+    },
+    {
+      "domanda": "Non trovo la data di emissione: me lo dici?",
+      "campo_atteso": "data_emissione",
+      "risposta": "01/09/2026",
+      "azione": "valore",
+      "campo": "data_emissione",
+      "valore": "01/09/2026"
+    },
+    {
+      "domanda": "Ecco i dati della fattura:\n- Fornitore: Rossi S.r.l. (IT) - P.IVA 01234567897\n- Fattura n. 45 del 2026-09-01, scadenza 2026-10-01\n- Imponibile 1.200,00 EUR + IVA 264,00 EUR = totale 1.464,00 EUR\n\nLa registro? Puoi anche correggere un dato (es. \"la scadenza è il 30/10/2026\") o annullare.",
+      "campo_atteso": "nessuno",
+      "risposta": "il totale è 1.481,35",
+      "azione": "valore",
+      "campo": "totale_cent",
+      "valore": "1.481,35"
+    },
+    {
+      "domanda": "Sulla fattura non trovo la data di scadenza. Propongo il 2026-10-01 (emissione + 30 giorni): va bene, mi dici un'altra data, o scrivi \"nessuna\"?",
+      "campo_atteso": "data_scadenza",
+      "risposta": "va benissimo così",
+      "azione": "conferma",
+      "campo": null,
+      "valore": null
+    },
+    {
+      "domanda": "Non trovo il cambio Banca d'Italia del giorno della fattura (quantità di valuta per 1 euro): me lo dici?",
+      "campo_atteso": "cambio_manuale",
+      "risposta": "1,1590",
+      "azione": "valore",
+      "campo": "cambio_manuale",
+      "valore": "1,1590"
+    },
+    {
+      "domanda": "Non trovo il totale: me lo dici?",
+      "campo_atteso": "totale_cent",
+      "risposta": "devo ancora controllare",
+      "azione": "altro",
+      "campo": null,
+      "valore": null
+    },
+    {
+      "domanda": "ATTENZIONE: la fattura è di 52.504,66 €, sopra la soglia di 5.000,00 €. Confermi di nuovo la registrazione?",
+      "campo_atteso": "nessuno",
+      "risposta": "sì sì confermo, è giusta",
+      "azione": "conferma",
+      "campo": null,
+      "valore": null
+    },
+    {
+      "domanda": "Ecco i dati della fattura:\n- Fornitore: Rossi S.r.l. (IT) - P.IVA 01234567897\n- Fattura n. 45 del 2026-09-01, scadenza 2026-10-01\n- Imponibile 1.200,00 EUR + IVA 264,00 EUR = totale 1.464,00 EUR\n\nLa registro? Puoi anche correggere un dato (es. \"la scadenza è il 30/10/2026\") o annullare.",
+      "campo_atteso": "nessuno",
+      "risposta": "cambia il fornitore in Rossi Srl",
+      "azione": "valore",
+      "campo": "fornitore",
+      "valore": "Rossi Srl"
+    },
+    {
+      "domanda": "Non trovo il fornitore: me lo dici?",
+      "campo_atteso": "fornitore",
+      "risposta": "boh non lo so, devo chiedere",
+      "azione": "altro",
+      "campo": null,
+      "valore": null
+    },
+    {
+      "domanda": "ATTENZIONE: la fattura è di 52.504,66 €, sopra la soglia di 5.000,00 €. Confermi di nuovo la registrazione?",
+      "campo_atteso": "nessuno",
+      "risposta": "no lascia stare",
+      "azione": "annulla",
+      "campo": null,
+      "valore": null
+    },
+    {
+      "domanda": "Ecco i dati della fattura:\n- Fornitore: Rossi S.r.l. (IT) - P.IVA 01234567897\n- Fattura n. 45 del 2026-09-01, scadenza 2026-10-01\n- Imponibile 1.200,00 EUR + IVA 264,00 EUR = totale 1.464,00 EUR\n\nLa registro? Puoi anche correggere un dato (es. \"la scadenza è il 30/10/2026\") o annullare.",
+      "campo_atteso": "nessuno",
+      "risposta": "sì ma il numero è 45/B",
+      "azione": "valore",
+      "campo": "numero",
+      "valore": "45/B"
+    },
+    {
+      "domanda": "Non trovo il paese del fornitore (es. IT, NL, US): me lo dici?",
+      "campo_atteso": "paese_fornitore",
+      "risposta": "Olanda",
+      "azione": "valore",
+      "campo": "paese_fornitore",
+      "valore": "Olanda"
+    },
+    {
+      "domanda": "Ecco i dati della fattura:\n- Fornitore: Rossi S.r.l. (IT) - P.IVA 01234567897\n- Fattura n. 45 del 2026-09-01, scadenza 2026-10-01\n- Imponibile 1.200,00 EUR + IVA 264,00 EUR = totale 1.464,00 EUR\n\nLa registro? Puoi anche correggere un dato (es. \"la scadenza è il 30/10/2026\") o annullare.",
+      "campo_atteso": "nessuno",
+      "risposta": "salvala pure",
+      "azione": "conferma",
+      "campo": null,
+      "valore": null
+    },
+    {
+      "domanda": "Non trovo la partita IVA: me lo dici?",
+      "campo_atteso": "partita_iva",
+      "risposta": "non ha partita iva, è americano",
+      "azione": "assente",
+      "campo": "partita_iva",
+      "valore": null
+    },
+    {
+      "domanda": "Non trovo la valuta (EUR, USD, GBP...): me lo dici?",
+      "campo_atteso": "valuta",
+      "risposta": "è in dollari",
+      "azione": "valore",
+      "campo": "valuta",
+      "valore": "dollari"
+    }
+  ],
+  "signature": {
+    "instructions": "Interpreta la risposta dell'utente a una domanda del bot che sta registrando una fattura fornitore.",
+    "fields": [
+      {
+        "prefix": "Domanda:",
+        "description": "La domanda fatta dal bot all'utente."
+      },
+      {
+        "prefix": "Campo Atteso:",
+        "description": "Il campo che il bot sta chiedendo, oppure 'nessuno'."
+      },
+      {
+        "prefix": "Risposta:",
+        "description": "La risposta scritta dall'utente."
+      },
+      {
+        "prefix": "Azione:",
+        "description": "conferma = accetta/approva; annulla = rinuncia alla fattura; valore = fornisce o corregge un dato; assente = dice che il dato richiesto non c'è sulla fattura; altro = risposta non pertinente."
+      },
+      {
+        "prefix": "Campo:",
+        "description": "Il campo a cui si riferisce il valore o l'assenza, se c'è."
+      },
+      {
+        "prefix": "Valore:",
+        "description": "Il valore COPIATO come l'ha scritto l'utente, senza convertirlo."
+      }
+    ]
+  },
+  "lm": null,
+  "metadata": {
+    "dependency_versions": {
+      "python": "3.13",
+      "dspy": "3.3.0",
+      "cloudpickle": "3.1"
+    }
+  }
+}

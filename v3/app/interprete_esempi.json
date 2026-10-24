@@ -1,0 +1,114 @@
+[
+ {
+  "campo_atteso": "nessuno",
+  "risposta": "aspetta un attimo che controllo",
+  "azione": "altro",
+  "campo": null,
+  "valore": null
+ },
+ {
+  "campo_atteso": "numero",
+  "risposta": "il numero è INV-2026-0042",
+  "azione": "valore",
+  "campo": "numero",
+  "valore": "INV-2026-0042"
+ },
+ {
+  "campo_atteso": "data_emissione",
+  "risposta": "01/09/2026",
+  "azione": "valore",
+  "campo": "data_emissione",
+  "valore": "01/09/2026"
+ },
+ {
+  "campo_atteso": "nessuno",
+  "risposta": "il totale è 1.481,35",
+  "azione": "valore",
+  "campo": "totale_cent",
+  "valore": "1.481,35"
+ },
+ {
+  "campo_atteso": "data_scadenza",
+  "risposta": "va benissimo così",
+  "azione": "conferma",
+  "campo": null,
+  "valore": null
+ },
+ {
+  "campo_atteso": "cambio_manuale",
+  "risposta": "1,1590",
+  "azione": "valore",
+  "campo": "cambio_manuale",
+  "valore": "1,1590"
+ },
+ {
+  "campo_atteso": "totale_cent",
+  "risposta": "devo ancora controllare",
+  "azione": "altro",
+  "campo": null,
+  "valore": null
+ },
+ {
+  "campo_atteso": "nessuno",
+  "risposta": "sì sì confermo, è giusta",
+  "azione": "conferma",
+  "campo": null,
+  "valore": null
+ },
+ {
+  "campo_atteso": "nessuno",
+  "risposta": "cambia il fornitore in Rossi Srl",
+  "azione": "valore",
+  "campo": "fornitore",
+  "valore": "Rossi Srl"
+ },
+ {
+  "campo_atteso": "fornitore",
+  "risposta": "boh non lo so, devo chiedere",
+  "azione": "altro",
+  "campo": null,
+  "valore": null
+ },
+ {
+  "campo_atteso": "nessuno",
+  "risposta": "no lascia stare",
+  "azione": "annulla",
+  "campo": null,
+  "valore": null
+ },
+ {
+  "campo_atteso": "nessuno",
+  "risposta": "sì ma il numero è 45/B",
+  "azione": "valore",
+  "campo": "numero",
+  "valore": "45/B"
+ },
+ {
+  "campo_atteso": "paese_fornitore",
+  "risposta": "Olanda",
+  "azione": "valore",
+  "campo": "paese_fornitore",
+  "valore": "Olanda"
+ },
+ {
+  "campo_atteso": "nessuno",
+  "risposta": "salvala pure",
+  "azione": "conferma",
+  "campo": null,
+  "valore": null
+ },
+ {
+  "campo_atteso": "partita_iva",
+  "risposta": "non ha partita iva, è americano",
+  "azione": "assente",
+  "campo": "partita_iva",
+  "valore": null
+ },
+ {
+  "campo_atteso": "valuta",
+  "risposta": "è in dollari",
+  "azione": "valore",
+  "campo": "valuta",
+  "valore": "dollari"
+ }
+]

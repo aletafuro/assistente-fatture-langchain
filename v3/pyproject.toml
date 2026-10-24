@@ -34,6 +34,10 @@ dev = [
     "mlflow>=3",
     "pytest>=9.0.2",
 ]
+dspy = [
+    "dspy==3.3.0",
+    "optuna>=4",
+]
 
 [tool.uv]
 package = false

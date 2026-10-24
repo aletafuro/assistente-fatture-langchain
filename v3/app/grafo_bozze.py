@@ -93,7 +93,21 @@ class Interpretazione(BaseModel):
                                                             "senza convertirlo (es. '20 ottobre 2026', '1.200,00')")
 
 
-_interprete = init_chat_model("openai:gpt-4.1-mini", temperature=0).with_structured_output(Interpretazione)
+_interprete = init_chat_model(f"openai:{config.MODELLO_INTERPRETE}", temperature=0).with_structured_output(Interpretazione)
+
+
+def _esempi_interprete() -> str:
+    """Esempi con l'interpretazione giusta, scelti con DSPy (app/interprete_esempi.json, vedi ottimizza_interprete.py).
+    Contengono le regole dell'amministrazione: "nessuna" = il dato non c'è, "non lo so" = altro, ecc."""
+    percorso = Path(__file__).resolve().parent / "interprete_esempi.json"
+    if not percorso.exists():
+        return ""
+    righe = [f"- campo chiesto: {e['campo_atteso']} | risposta: \"{e['risposta']}\" -> azione={e['azione']}, "
+             f"campo={e['campo']}, valore={e['valore']}" for e in json.loads(percorso.read_text(encoding="utf-8"))]
+    return "Esempi di risposte con l'interpretazione giusta:\n" + "\n".join(righe) + "\n\n"
+
+
+_ESEMPI = _esempi_interprete()
 _SI = {"sì", "si", "ok", "okay", "conferma", "confermo", "va bene", "salva", "salvala", "registra", "procedi"}
 _ANNULLA = {"annulla", "annullala", "lascia perdere", "cancella"}
 
@@ -105,7 +119,7 @@ def interpreta(domanda: str, risposta: str, campo_atteso: Optional[str] = None) 
     if pulita in _ANNULLA:
         return Interpretazione(azione="annulla")
     return _interprete.invoke(
-        f"Domanda fatta all'utente: {domanda}\nCampo atteso (se è una richiesta di dato): {campo_atteso}\n"
+        f"{_ESEMPI}Domanda fatta all'utente: {domanda}\nCampo atteso (se è una richiesta di dato): {campo_atteso}\n"
         f"Risposta dell'utente: {risposta}\nInterpreta la risposta.")
 
 

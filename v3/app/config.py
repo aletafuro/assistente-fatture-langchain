@@ -41,6 +41,9 @@ AZIENDA_NOME = os.getenv("AZIENDA_NOME") or None
 # non si cambiano nel codice.
 MODELLO_TESTO = os.getenv("MODELLO_LETTURA_TESTO", "gpt-4.1-mini")   # scelto con MLflow: estere 7/7 contro 6/7
 MODELLO_FOTO = os.getenv("MODELLO_LETTURA_FOTO", "gpt-4.1-mini")
+# Interprete delle risposte dell'utente: scelto con DSPy + MLflow (con 16 esempi: 98,6% contro 88,9% del
+# prompt scritto a mano con gpt-4.1-mini), e costa meno.
+MODELLO_INTERPRETE = os.getenv("MODELLO_INTERPRETE", "gpt-4o-mini")
 AZIENDA_PIVA = (os.getenv("AZIENDA_PIVA") or "").upper().removeprefix("IT") or None
 
 LOG = BASE / "log"
