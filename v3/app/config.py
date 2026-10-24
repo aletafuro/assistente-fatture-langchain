@@ -36,6 +36,11 @@ CAMBI_BDI = DATI / "cambi_bdi.json"          # cambi già scaricati dalla Banca 
 # La nostra azienda: compare in ogni fattura come CLIENTE, mai come fornitore.
 # Si imposta nel .env (non nel codice): lo stesso programma serve aziende diverse.
 AZIENDA_NOME = os.getenv("AZIENDA_NOME") or None
+
+# Modelli di lettura: si scelgono dalla configurazione (e si confrontano con gli esperimenti MLflow),
+# non si cambiano nel codice.
+MODELLO_TESTO = os.getenv("MODELLO_LETTURA_TESTO", "gpt-4.1-mini")   # scelto con MLflow: estere 7/7 contro 6/7
+MODELLO_FOTO = os.getenv("MODELLO_LETTURA_FOTO", "gpt-4.1-mini")
 AZIENDA_PIVA = (os.getenv("AZIENDA_PIVA") or "").upper().removeprefix("IT") or None
 
 LOG = BASE / "log"

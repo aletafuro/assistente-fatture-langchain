@@ -18,14 +18,15 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.prompts import ChatPromptTemplate
 
 import avvisi
+import config
 from fatture_comuni import (ISTRUZIONI_ESTRAZIONE, DatiFattura, formato_sdi, in_dizionario, leggi_pdf,
                             scadenze_sdi)
 
 FORMATI_IMMAGINE = {".jpg": "jpeg", ".jpeg": "jpeg", ".png": "png"}
 
 # Modelli scelti MISURANDO sul golden set (vedi valutazione/ e RELAZIONE).
-_estrattore_testo = init_chat_model("openai:gpt-4o-mini", temperature=0).with_structured_output(DatiFattura)
-_estrattore_foto = init_chat_model("openai:gpt-4.1-mini", temperature=0).with_structured_output(DatiFattura)
+_estrattore_testo = init_chat_model(f"openai:{config.MODELLO_TESTO}", temperature=0).with_structured_output(DatiFattura)
+_estrattore_foto = init_chat_model(f"openai:{config.MODELLO_FOTO}", temperature=0).with_structured_output(DatiFattura)
 
 _chain_testo = ChatPromptTemplate.from_messages([
     ("system", ISTRUZIONI_ESTRAZIONE),
@@ -37,10 +38,14 @@ class ErroreEstrazione(Exception):
     """Errore 'gentile': il messaggio si può mostrare così com'è all'utente."""
 
 
+class ServizioNonDisponibile(ErroreEstrazione):
+    """Errore TEMPORANEO (il servizio non risponde): non va salvato tra le letture, si riprova."""
+
+
 def _servizio_non_disponibile(errore: Exception) -> ErroreEstrazione:
     """OpenAI non risponde: lo registriamo per gli avvisi tecnici e diamo un messaggio chiaro."""
     avvisi.errore_tecnico("OpenAI (lettura fatture)", errore)
-    return ErroreEstrazione("Il servizio che legge le fatture (OpenAI) al momento non risponde. "
+    return ServizioNonDisponibile("Il servizio che legge le fatture (OpenAI) al momento non risponde. "
                             "Riprova tra qualche minuto: non è andato perso niente.")
 
 
@@ -49,9 +54,10 @@ def estrai_da_testo(testo: str, nome: str = "testo", grezzo: dict = None) -> dic
     if grezzo is not None:
         return in_dizionario(nome, DatiFattura(**grezzo))
     try:
-        return in_dizionario(nome, _chain_testo.invoke({"testo": testo}))
-    except Exception as errore:
+        risposta = _chain_testo.invoke({"testo": testo})
+    except Exception as errore:                      # solo la chiamata al modello: il resto non è "OpenAI"
         raise _servizio_non_disponibile(errore)
+    return in_dizionario(nome, risposta)
 
 
 def estrai_da_pdf(percorso: Path, grezzo: dict = None) -> dict:

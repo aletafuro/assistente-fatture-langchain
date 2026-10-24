@@ -19,3 +19,8 @@ venv/
 .idea/
 .vscode/
 dati_demo/
+
+# esperimenti MLflow (locali)
+mlflow.db
+mlruns/
+mlartifacts/

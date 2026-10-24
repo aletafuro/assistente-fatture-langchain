@@ -143,3 +143,9 @@ def test_la_risposta_salvata_del_modello_si_riusa_senza_richiamarlo(monkeypatch)
     monkeypatch.setattr(estrazione, "_chain_testo", type("C", (), {"invoke": vietato})())
     d = estrazione.estrai_da_testo("testo qualsiasi", "f.pdf", grezzo=grezzo)
     assert d["data_emissione"] == "2026-09-01" and d["totale_cent"] == 120000
+
+
+@pytest.mark.parametrize("testo, centesimi", [("0%", 0), ("99.00 USD", 9900), ("46.887,00 Kč", 4688700), ("n/d", None)])
+def test_importi_scritti_in_modo_strano(testo, centesimi):
+    # Visto su una ricevuta: l'IVA "0%" faceva fallire la conversione (e sembrava un guasto di OpenAI).
+    assert euro_in_centesimi(testo) == centesimi

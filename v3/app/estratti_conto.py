@@ -199,7 +199,13 @@ def stesso_fornitore(fornitore: str, descrizione: str, alias: Optional[dict] = N
     for sulla_carta, nome in alias.items():
         if sulla_carta in descr and _simili(_parole(nome), _parole(fornitore)):
             return True
-    return _simili(_parole(fornitore), _parole(descrizione))
+    if _simili(_parole(fornitore), _parole(descrizione)):
+        return True
+    # Nomi scritti attaccati sull'estratto conto: "BALTICPIXEL" = "Baltic Pixel UAB"
+    in_ordine = sorted(_parole(fornitore), key=(fornitore or "").lower().find)
+    tutto_attaccato = re.sub(r"[^a-z0-9]", "", descr)
+    return any(len(pezzo) >= 6 and pezzo in tutto_attaccato
+               for pezzo in ("".join(in_ordine[:k]) for k in range(2, len(in_ordine) + 1)))
 
 
 def abbina(fattura: dict, movimenti: list, alias: Optional[dict] = None, gia_usati: Optional[set] = None) -> Optional[Movimento]:

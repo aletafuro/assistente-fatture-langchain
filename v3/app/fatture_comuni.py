@@ -75,8 +75,10 @@ class DatiFattura(BaseModel):
     data_emissione: Optional[str] = Field(
         default=None,
         description="Data di emissione copiata ESATTAMENTE come scritta, senza cambiarne il formato "
-                    "(es. '12/03/2025' oppure '2026-06-10'). Se la fattura non ha una data di emissione, lascia "
-                    "vuoto: NON usare la data di scadenza né altre date.")
+                    "(es. '12/03/2025' oppure '2026-06-10'). È la data del DOCUMENTO, scritta come 'Data', 'Date', "
+                    "'Invoice date', 'Date of issue', 'Issued' oppure, in una ricevuta ('Receipt'), 'Date paid' / "
+                    "'Payment date'. Lascia vuoto solo se il documento non ha nessuna di queste date "
+                    "(la data di scadenza e le date del periodo non valgono).")
     fine_periodo: Optional[str] = Field(
         default=None,
         description="Se la fattura indica un periodo di fatturazione (es. 'billing period August 1, 2026 - "
@@ -151,7 +153,11 @@ def leggi_pdf(percorso: Path) -> str:
 def euro_in_centesimi(testo: Optional[str]) -> Optional[int]:
     if testo is None:
         return None
-    pulito = re.sub(r"[€$£\s]|EUR|USD|GBP|CHF", "", testo).replace("'", "").strip()
+    # Si tengono solo cifre, separatori e segno: via valute, simboli e altro testo ("0%", "99.00 USD", "Kč")
+    senza_percentuali = re.sub(r"\d+(?:[.,]\d+)?\s*%", "", testo)
+    pulito = re.sub(r"[^0-9.,\-]", "", senza_percentuali)
+    if not re.search(r"\d", pulito):
+        return 0 if "%" in testo else None
     cifre = pulito.lstrip("-")
     if "," in cifre and "." in cifre:
         # Ci sono entrambi: il separatore dei DECIMALI è l'ultimo che compare.

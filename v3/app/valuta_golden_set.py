@@ -46,7 +46,8 @@ def estrai(canale: str, percorso: Path) -> dict:
     return estrai_da_file(percorso)
 
 
-def main(giri: int) -> None:
+def valuta(giri: int = 3, rapporto: bool = True) -> dict:
+    """Esegue il golden set italiano e restituisce i numeri (usati anche dagli esperimenti MLflow)."""
     golden = carica_golden_set()
     risultati = []
     inizio = time.time()
@@ -65,9 +66,23 @@ def main(giri: int) -> None:
             print(f"giro {giro} {segno} {canale:6} {nome}" + (f"  -> {sbagliati}" if sbagliati else ""))
 
     durata = time.time() - inizio
-    (config.VALUTAZIONE / "risultati_valutazione.json").write_text(
-        json.dumps(risultati, ensure_ascii=False, indent=2), encoding="utf-8")
-    scrivi_rapporto(golden, risultati, giri, durata)
+    if rapporto:
+        (config.VALUTAZIONE / "risultati_valutazione.json").write_text(
+            json.dumps(risultati, ensure_ascii=False, indent=2), encoding="utf-8")
+        scrivi_rapporto(golden, risultati, giri, durata)
+    errori = {}
+    for r in risultati:
+        for campo in r["campi_sbagliati"]:
+            errori[campo] = errori.get(campo, 0) + 1
+    per_giro = [sum(r["corretta"] for r in risultati if r["giro"] == g) / len(golden) for g in range(1, giri + 1)]
+    return {"estrazioni": len(risultati), "corrette": sum(r["corretta"] for r in risultati),
+            "accuratezza": sum(r["corretta"] for r in risultati) / len(risultati),
+            "rumore": max(per_giro) - min(per_giro), "errori_per_campo": errori, "durata_s": durata,
+            "risultati": risultati}
+
+
+def main(giri: int) -> None:
+    valuta(giri)
 
 
 def scrivi_rapporto(golden: dict, risultati: list, giri: int, durata: float) -> None:
@@ -114,8 +129,8 @@ def scrivi_rapporto(golden: dict, risultati: list, giri: int, durata: float) -> 
         righe.append("Nessun errore su nessun campo.")
 
     righe += ["", "## Modelli usati", "",
-              "- PDF e testo: `gpt-4o-mini` (temperature 0) con output strutturato Pydantic",
-              "- Foto: `gpt-4.1-mini` (temperature 0), immagine in base64 con `detail: high`",
+              f"- PDF e testo: `{config.MODELLO_TESTO}` (temperature 0) con output strutturato Pydantic",
+              f"- Foto: `{config.MODELLO_FOTO}` (temperature 0), immagine in base64 con `detail: high`",
               "- Vocale: trascrizione `gpt-4o-mini-transcribe` (lingua it), poi estrazione come il testo",
               "- Conversioni (centesimi, date) e controlli: Python", ""]
     (config.VALUTAZIONE / "VALUTAZIONE.md").write_text("\n".join(righe), encoding="utf-8")

@@ -35,7 +35,7 @@ import cambi_bdi
 import config
 import estratti_conto as ec
 import termini
-from estrazione import ErroreEstrazione, estrai_da_file
+from estrazione import ErroreEstrazione, ServizioNonDisponibile, estrai_da_file
 from fatture_comuni import PIVA_ESTERO_ASSENTE, e_estero
 
 LETTURE = config.DATI / "letture"
@@ -56,7 +56,7 @@ def _versione_lettura() -> str:
     (date, importi, partite IVA) si rifanno a ogni avvio. Così correggere Python non costa una nuova lettura.
     """
     import fatture_comuni
-    domanda = fatture_comuni.ISTRUZIONI_ESTRAZIONE + json.dumps(fatture_comuni.DatiFattura.model_json_schema(),
+    domanda = config.MODELLO_TESTO + config.MODELLO_FOTO + fatture_comuni.ISTRUZIONI_ESTRAZIONE + json.dumps(fatture_comuni.DatiFattura.model_json_schema(),
                                                                 sort_keys=True)
     return hashlib.sha256(domanda.encode()).hexdigest()[:8]
 
@@ -76,6 +76,8 @@ def leggi(percorso: Path) -> dict:
     else:
         try:
             dati = estrai_da_file(percorso)
+        except ServizioNonDisponibile as errore:          # temporaneo: niente salvataggio, si riprova
+            return {"errore": str(errore), "file": percorso.name}
         except ErroreEstrazione as errore:
             dati = {"errore": str(errore)}
         salvata.write_text(json.dumps({"_grezzo": dati["_grezzo"]} if "_grezzo" in dati else dati,
