@@ -1,0 +1,40 @@
+# Test automatici della v3 a ogni modifica (come nel modulo MLOps, con uv e pytest).
+# I test NON chiamano il modello e NON vanno in rete: sono gratuiti e danno sempre lo stesso risultato.
+# Poi si costruisce il container: se l'immagine non si costruisce, la modifica non è pronta.
+name: v3 - test e container
+
+on:
+  push:
+    paths: ["v3/**", ".github/workflows/v3-test.yml"]
+  pull_request:
+    paths: ["v3/**"]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: v3
+    steps:
+      - name: Scarica il codice
+        uses: actions/checkout@v5
+
+      - name: Installa uv
+        uses: astral-sh/setup-uv@v6
+
+      - name: Test (versioni esatte del lock file)
+        run: uv run --frozen pytest -q
+
+  container:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Scarica il codice
+        uses: actions/checkout@v5
+
+      - name: Test dentro il container
+        run: docker build --target test -t assistente-fatture:test v3
+
+      - name: Immagine di produzione
+        run: docker build -t assistente-fatture:${{ github.sha }} v3

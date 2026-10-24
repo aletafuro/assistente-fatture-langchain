@@ -1,0 +1,39 @@
+# Valutazione della LETTURA con il modello vero (golden set italiano + estero).
+# Costa qualche centesimo, quindi parte solo a mano (Actions -> "v3 - valutazione" -> Run workflow).
+# La chiave OpenAI sta nei secrets del repository (Settings -> Secrets and variables -> Actions -> OPENAI_API_KEY):
+# non è mai scritta nel codice e GitHub la nasconde nei log.
+name: v3 - valutazione con il modello
+
+on:
+  workflow_dispatch:
+    inputs:
+      modello:
+        description: "Modello per leggere il testo delle fatture"
+        default: "gpt-4.1-mini"
+      giri:
+        description: "Giri sul golden set italiano (per misurare il rumore)"
+        default: "3"
+
+jobs:
+  valutazione:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: v3
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      AZIENDA_NOME: "Impresa Cliente SRL"
+      AZIENDA_PIVA: "IT09999999999"
+      MLFLOW_DISABLE_AGENT_HINT: "1"
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v6
+
+      - name: Golden set con MLflow
+        run: PYTHONPATH=app uv run --frozen python app/esperimento.py "${{ inputs.modello }}" "${{ inputs.giri }}"
+
+      - name: Salva il database degli esperimenti
+        uses: actions/upload-artifact@v4
+        with:
+          name: mlflow-${{ inputs.modello }}
+          path: v3/mlflow.db

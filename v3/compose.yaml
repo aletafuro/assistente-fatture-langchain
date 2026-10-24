@@ -1,0 +1,17 @@
+# Avvio del bot nel container, con un solo comando:   docker compose up -d
+# Log:   docker compose logs -f        Stop:   docker compose down
+#
+# - le impostazioni e i segreti arrivano dal file .env (non entra mai nell'immagine);
+# - dati/ e segreti/ restano sul computer (o sul disco del server) e vengono "collegati" al container:
+#   aggiornare l'immagine non cancella né il registro né le credenziali Google.
+services:
+  bot:
+    build: .
+    image: assistente-fatture:3.0
+    env_file: .env
+    environment:
+      CARTELLA_DATI: /dati
+    volumes:
+      - ./dati:/dati
+      - ./segreti:/app/segreti
+    restart: unless-stopped

@@ -1,0 +1,11 @@
+# Mai nell'immagine: segreti, dati, ambienti locali, esperimenti
+.env
+segreti/
+dati/
+log/
+.venv/
+**/__pycache__/
+*.pyc
+mlflow.db
+mlruns/
+.pytest_cache/
