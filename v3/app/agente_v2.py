@@ -35,7 +35,10 @@ from langchain_mcp_adapters.client import MultiServerMCPClient
 from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
 from pydantic import BaseModel, Field
 
+import estratti_conto
 import rag_fatture
+import termini
+from langchain_core.tools import tool
 from strumenti_fatture import (annulla_fattura, esporta_riepilogo_excel, invia_riepilogo_al_commercialista,
                                riprova_archiviazione, segna_pagata)
 
@@ -47,8 +50,25 @@ SERVER_MCP = {
         "env": dict(os.environ),      # passa al server anche CARTELLA_DATI e le altre impostazioni
     }
 }
+@tool
+def ricorda_nome_sulla_carta(nome_sulla_carta: str, fornitore: str) -> str:
+    """Ricorda che un nome che compare sull'estratto conto della carta (Amex, UniCredit) corrisponde a un
+    fornitore con una ragione sociale diversa. Esempio: l'utente scrive "CodeWave è Fabrikam" ->
+    nome_sulla_carta="CodeWave", fornitore="Fabrikam". Serve ad abbinare gli addebiti alle fatture."""
+    return estratti_conto.aggiungi_alias(nome_sulla_carta, fornitore)
+
+
+@tool
+def imposta_termini_pagamento(fornitore: str, termine: str) -> str:
+    """Salva i termini di pagamento di un fornitore, usati per lo scadenziario quando la fattura non ha una
+    scadenza. Il termine si scrive come lo scrive l'amministrazione: "30 gg DF" (30 giorni data fattura),
+    "60 gg DF", "30 gg FM" (fine mese). Esempio: "Tailspin si paga a 30 giorni" -> termine="30 gg DF"."""
+    return termini.imposta(fornitore, termine)
+
+
 TOOL_SCRITTURA = [segna_pagata, annulla_fattura, esporta_riepilogo_excel,
-                  invia_riepilogo_al_commercialista, riprova_archiviazione]
+                  invia_riepilogo_al_commercialista, riprova_archiviazione,
+                  ricorda_nome_sulla_carta, imposta_termini_pagamento]
 
 
 def system_prompt() -> str:

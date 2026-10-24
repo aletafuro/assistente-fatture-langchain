@@ -88,7 +88,8 @@ def leggi(percorso: Path) -> dict:
 
 def file_da_leggere(cartella: Path, esclusi: set) -> list:
     """Tutti i PDF, senza le copie di cortesia che hanno anche l'originale e senza gli estratti conto."""
-    pdf = [p for p in sorted(cartella.rglob("*")) if p.suffix.lower() == ".pdf" and p.resolve() not in esclusi]
+    pdf = [p for p in sorted(cartella.rglob("*")) if p.suffix.lower() in (".pdf", ".jpg", ".jpeg", ".png")
+           and p.resolve() not in esclusi and "risultati" not in p.parts]
     originali = {re.sub(r"\s*\(copia di cortesia.*?\)", "", p.stem, flags=re.I).lower() for p in pdf
                  if "copia di cortesia" not in p.stem.lower()}
     scelti, saltati = [], []
@@ -168,6 +169,14 @@ def controvalore(fattura: dict, tutti: list, usati: set) -> tuple:
     return (importo / q[0]).quantize(CENT, ROUND_HALF_UP), f"cambio BdI {q[0]} del {date.fromisoformat(q[1]):%d/%m}", None
 
 
+def nota_anagrafica(testo: str) -> str:
+    """Nota breve per la colonna Note della registrazione (quello che serve all'amministrazione)."""
+    nuovo = re.match(r"Creata la scheda anagrafica di .+ \(verifica partita IVA: (.+)\)\.", testo)
+    if nuovo:
+        return f"nuovo fornitore: creare l'anagrafica (P.IVA {nuovo.group(1)})"
+    return testo.split(": ", 1)[-1].rstrip(".")       # "Rossi: nome cambiato da ..." -> "nome cambiato da ..."
+
+
 def scadenza(fattura: dict) -> tuple:
     """(data di scadenza, da dove arriva)."""
     termine = termini.termine_di(fattura.get("fornitore") or "")
@@ -240,14 +249,16 @@ def elabora(cartella: Path, amex: Optional[Path] = None, unicredit: Optional[Pat
         f["scadenza"], f["fonte_scadenza"] = scadenza(f)
         if not f["scadenza"] and mov:                 # pagata con carta: la "scadenza" è il giorno dell'addebito
             f["scadenza"], f["fonte_scadenza"] = mov.data.isoformat(), "addebito su carta"
-        if f["scadenza"] and f.get("data_emissione") and f["scadenza"] < f["data_emissione"]:
+        # Solo per la scadenza scritta sulla fattura: un addebito su carta può venire prima (es. volo pagato
+        # alla prenotazione), e non è un errore.
+        if f["fonte_scadenza"] == "dalla fattura" and f.get("data_emissione") and f["scadenza"] < f["data_emissione"]:
             f.setdefault("note_lettura", []).append("scadenza precedente alla data fattura: controllare")
         f["note"] = list(f.get("note_lettura", []))
         if f["estera"]:
             try:
                 cambiati = anagrafica_esteri.aggiorna_da_fattura(
                     f | {"id": f["file"], "data_emissione": f.get("data_emissione") or ""})
-                f["note"] += [n for n in cambiati if "cambiato" in n or "Creata" in n]
+                f["note"] += [nota_anagrafica(n) for n in cambiati if "cambiato" in n or "Creata" in n]
             except Exception as errore:
                 f["note"].append(f"anagrafica non aggiornata ({errore})")
         fatture.append(f)

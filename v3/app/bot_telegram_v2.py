@@ -35,6 +35,7 @@ import anagrafica_esteri
 import avvisi
 import bot_telegram as v1          # riuso: autorizzazione, download, comandi /stato /controllo, errori
 import grafo_bozze
+import raccolta_mese
 from registro_fatture import ErroreRegistro
 from trascrizione import ErroreTrascrizione, trascrivi
 
@@ -81,8 +82,36 @@ async def all_agente(update: Update, messaggio: str) -> None:
                 await update.message.reply_document(f, filename=percorso.name)
 
 
+async def elabora_raccolta(update: Update) -> None:
+    """Il mese raccolto in chat viene elaborato e i file tornano in chat."""
+    chat = str(update.effective_chat.id)
+    await invia(update, "Elaboro le fatture del mese: può volerci qualche minuto (le fatture già lette "
+                        "non si rileggono).")
+    await update.effective_chat.send_action(ChatAction.UPLOAD_DOCUMENT)
+    try:
+        messaggio, creati = await asyncio.to_thread(raccolta_mese.elabora, chat)
+    except Exception as errore:
+        log.exception("Elaborazione del mese")
+        avvisi.errore_tecnico("Elaborazione del mese", errore)
+        await invia(update, "Scusa, l'elaborazione non è riuscita. La raccolta resta aperta: riprova con \"elabora\".")
+        return
+    await invia(update, messaggio)
+    for percorso in creati:
+        with open(percorso, "rb") as f:
+            await update.message.reply_document(f, filename=percorso.name)
+
+
 async def smista_testo(update: Update, testo: str, percorso_audio: Path = None) -> None:
     chat = str(update.effective_chat.id)
+    if raccolta_mese.aperta(chat):                            # raccolta del mese in corso
+        comando = testo.strip().lower().rstrip(".!")
+        if comando in ("elabora", "fatto", "ho finito", "finito"):
+            await elabora_raccolta(update)
+            return
+        if comando in ("annulla", "annulla raccolta", "chiudi"):
+            raccolta_mese.chiudi(chat)
+            await invia(update, "Raccolta del mese annullata: non ho elaborato niente.")
+            return
     if grafo_bozze.bozza_aperta(chat):                        # risposta a una domanda del grafo
         await al_grafo(update, grafo_bozze.rispondi, testo)
     elif await asyncio.to_thread(agente_v2.e_nuova_fattura, testo):   # ROUTER: fattura nuova?
@@ -91,8 +120,13 @@ async def smista_testo(update: Update, testo: str, percorso_audio: Path = None) 
         await all_agente(update, testo)
 
 
-async def nuovo_file(update: Update, percorso: Path) -> None:
-    if grafo_bozze.bozza_aperta(str(update.effective_chat.id)):
+async def nuovo_file(update: Update, percorso: Path, nome_originale: str = None) -> None:
+    chat = str(update.effective_chat.id)
+    if raccolta_mese.aperta(chat):                            # durante /mese i file vanno nella raccolta
+        await invia(update, await asyncio.to_thread(raccolta_mese.aggiungi, chat, percorso,
+                                                    nome_originale or percorso.name))
+        return
+    if grafo_bozze.bozza_aperta(chat):
         await invia(update, "Ho già una fattura in lavorazione: rispondi prima alla mia ultima domanda "
                             "(oppure scrivi \"annulla\"), poi rimandami questo file.")
         return
@@ -107,14 +141,26 @@ async def nuovo_file(update: Update, percorso: Path) -> None:
 async def comando_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if not await v1.autorizzato(update):
         return
-    testo = ("Ciao! Sono il tuo assistente per le fatture fornitori (versione 2).\n"
+    testo = ("Ciao! Sono il tuo assistente per le fatture fornitori (versione 3).\n"
              "Mandami una fattura come PDF, foto (meglio come file), vocale (numeri cifra per cifra) o testo:\n"
              "ti guiderò passo passo fino alla registrazione.\n"
-             "Puoi anche chiedermi riepiloghi, scadenze, cosa hai comprato, o dirmi che hai pagato una fattura.")
+             "Puoi anche chiedermi riepiloghi, scadenze, cosa hai comprato, o dirmi che hai pagato una fattura.\n"
+             "Per il lavoro del mese scrivi /mese: mi mandi tutte le fatture e gli estratti conto, io ti restituisco "
+             "registrazione contabile, scadenziario e controvalori in euro.")
     domanda = grafo_bozze.domanda_in_sospeso(str(update.effective_chat.id))
     if domanda:
         testo += f"\n\nHai una fattura in sospeso. La mia ultima domanda era:\n{domanda}"
     await invia(update, testo)
+
+
+async def comando_mese(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """/mese: si apre la raccolta delle fatture del mese (più gli estratti conto Amex e UniCredit)."""
+    if not await v1.autorizzato(update):
+        return
+    raccolta_mese.apri(str(update.effective_chat.id))
+    await invia(update, "Raccolta del mese aperta. Mandami le fatture (PDF o foto, anche tutte insieme o in uno ZIP) "
+                        "e gli estratti conto (Excel Amex, PDF della carta UniCredit): li riconosco da solo.\n"
+                        "Quando hai finito scrivi \"elabora\". Per lasciar perdere scrivi \"annulla\".")
 
 
 async def messaggio_testo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -133,14 +179,15 @@ async def messaggio_documento(update: Update, context: ContextTypes.DEFAULT_TYPE
         return
     documento = update.message.document
     nome = documento.file_name or "documento"
-    if Path(nome).suffix.lower() not in v1.ESTENSIONI_DOCUMENTI:
+    ammessi = raccolta_mese.ESTENSIONI if raccolta_mese.aperta(str(update.effective_chat.id)) else v1.ESTENSIONI_DOCUMENTI
+    if Path(nome).suffix.lower() not in ammessi:
         await invia(update, f"Il file '{nome}' non è in un formato che so leggere. Mandami un PDF, una foto "
                             "JPG/PNG, un vocale oppure scrivimi i dati.")
         return
     if documento.file_size and documento.file_size > 20 * 1024 * 1024:
         await invia(update, "Il file è troppo grande (limite di Telegram per i bot: 20 MB).")
         return
-    await nuovo_file(update, await v1.scarica(await documento.get_file(), nome, update))
+    await nuovo_file(update, await v1.scarica(await documento.get_file(), nome, update), nome)
 
 
 async def messaggio_vocale(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -204,6 +251,7 @@ def main() -> None:
     app.add_handler(CommandHandler("stato", v1.comando_stato))
     app.add_handler(CommandHandler("controllo", v1.comando_controllo))
     app.add_handler(CommandHandler("anagrafica", comando_anagrafica))
+    app.add_handler(CommandHandler("mese", comando_mese))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, messaggio_testo))
     app.add_handler(MessageHandler(filters.PHOTO, messaggio_foto))
     app.add_handler(MessageHandler(filters.Document.ALL, messaggio_documento))
