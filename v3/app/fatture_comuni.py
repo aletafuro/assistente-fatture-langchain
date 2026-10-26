@@ -98,11 +98,12 @@ class DatiFattura(BaseModel):
         default=None,
         description="Totale documento (IVA inclusa) copiato come scritto, es. '1.464,00'. "
                     "Non l'eventuale 'importo dovuto' al netto di trattenute. Senza simbolo di valuta.")
-    tipo_documento: Literal["fattura", "nota_di_credito", "altro"] = Field(
+    tipo_documento: Literal["fattura", "nota_di_credito", "proforma", "altro"] = Field(
         default="fattura",
         description="'fattura' (anche 'Invoice', 'Receipt' di un acquisto); 'nota_di_credito' se è una nota di "
-                    "credito / credit note / rimborso; 'altro' se NON è una fattura (contabile di bonifico, "
-                    "avviso di parcella, preventivo, guida, estratto conto).")
+                    "credito / credit note / rimborso; 'proforma' se è una fattura pro-forma / proforma invoice "
+                    "(richiesta di pagamento prima della fattura vera); 'altro' se NON è una fattura (contabile di "
+                    "bonifico, avviso di parcella, preventivo, guida, estratto conto).")
     metodo_pagamento: Optional[str] = Field(
         default=None,
         description="Come è stata pagata, se è scritto: es. 'American Express 2007', 'Visa 1234', "

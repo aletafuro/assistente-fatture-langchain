@@ -293,7 +293,10 @@ def scrivi_file(risultato: dict, uscita: Path, mese: str, amex: Optional[Path] =
                 elif isinstance(c.value, (float, Decimal)):
                     c.number_format = "#,##0.00"
 
-    estere = sorted([f for f in risultato["fatture"] if f["estera"]], key=lambda f: (f.get("fornitore") or "").lower())
+    # La pro-forma è una richiesta di pagamento: va nello scadenziario, NON nella registrazione contabile
+    # (in prova: Proseware pro-forma 519-2026, messa dall'amministrazione nello scadenzario).
+    estere = sorted([f for f in risultato["fatture"] if f["estera"] and f.get("tipo_documento") != "proforma"],
+                    key=lambda f: (f.get("fornitore") or "").lower())
     wb = Workbook()
     foglio(wb.active, ["Data Registrazione", "Fornitore", "Numero Fattura", "Data Fattura",
                        "Importo Valuta Originaria", "Importo EURO", "Note"],
@@ -309,7 +312,7 @@ def scrivi_file(risultato: dict, uscita: Path, mese: str, amex: Optional[Path] =
     wb = Workbook()
 
     def nota_scadenziario(f):
-        note = []
+        note = ["pro-forma: la fattura vera arriverà dopo"] if f.get("tipo_documento") == "proforma" else []
         if f.get("movimento"):
             m = f["movimento"]
             note.append(f"pagata con carta {m['fonte'].upper()} il {date.fromisoformat(m['data']):%d/%m/%Y}")
@@ -317,14 +320,19 @@ def scrivi_file(risultato: dict, uscita: Path, mese: str, amex: Optional[Path] =
             note.append(f["fonte_scadenza"])
         return "; ".join(note) or None
 
-    foglio(wb.active, ["Fornitore", "Numero Fattura", "Data Fattura", "Importo Valuta Originaria", "Importo EURO",
-                       "Termini di Pagamento", "Data di Scadenza", "Note"],
-           [[f.get("fornitore"), f.get("numero"), _data_it(f.get("data_emissione")),
-             (float(f["importo_valuta"]) if f.get("valuta") not in (None, "EUR") and f["importo_valuta"] is not None else None),
-             float(f["importo_eur"]) if f["importo_eur"] is not None else None,
-             termini.termine_di(f.get("fornitore") or ""), _data_it(f.get("scadenza")), nota_scadenziario(f)]
-            for f in tutte])
+    def riga(f):
+        return [f.get("fornitore"), f.get("numero"), _data_it(f.get("data_emissione")),
+                (float(f["importo_valuta"]) if f.get("valuta") not in (None, "EUR") and f["importo_valuta"] is not None else None),
+                float(f["importo_eur"]) if f["importo_eur"] is not None else None,
+                termini.termine_di(f.get("fornitore") or ""), _data_it(f.get("scadenza")), nota_scadenziario(f)]
+
+    # Regola dell'amministrazione (call del 23/10): nello scadenziario vanno le fatture DA PAGARE (bonifico).
+    # Quelle già addebitate su carta si pagano da sole: stanno in un foglio a parte, per consultarle.
+    intestazione = ["Fornitore", "Numero Fattura", "Data Fattura", "Importo Valuta Originaria", "Importo EURO",
+                    "Termini di Pagamento", "Data di Scadenza", "Note"]
+    foglio(wb.active, intestazione, [riga(f) for f in tutte if not f.get("movimento")])
     wb.active.title = "Scadenziario fatture"
+    foglio(wb.create_sheet("Pagate con carta"), intestazione, [riga(f) for f in tutte if f.get("movimento")])
     creati.append(uscita / f"Scadenziario fatture {mese}.xlsx")
     wb.save(creati[-1])
 
@@ -359,7 +367,7 @@ def scrivi_file(risultato: dict, uscita: Path, mese: str, amex: Optional[Path] =
         problemi = []
         if f["estera"] and f["importo_eur"] is None:
             problemi.append("controvalore in euro mancante")
-        if not f.get("scadenza"):
+        if not f.get("scadenza") and not f.get("movimento"):
             problemi.append("scadenza mancante (termini da definire, o pagata con una carta senza estratto conto)")
         if not f.get("numero") or not f.get("data_emissione"):
             problemi.append("numero o data mancanti")
