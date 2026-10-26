@@ -11,8 +11,9 @@ Data di chiusura D, fattura con un periodo di competenza (letto dal modello nell
                Es. abbonamento annuale dal 17/09/2026 al 16/09/2027, chiusura 31/12/2026: 259 giorni su 365.
    - RATEO:    fattura datata DOPO D, con il periodo (in parte) entro D -> la quota fino a D è un costo del
                periodo chiuso (fatture da ricevere). Es. fattura di gennaio "dal 15/12/2026 al 15/01/2027",
-               chiusura 31/12/2026: 17 giorni su 32.
-La quota è proporzionale ai giorni (estremi compresi) ed è calcolata da Python, non dal modello.
+               chiusura 31/12/2026: 17 giorni su 31.
+La quota è proporzionale ai giorni ed è calcolata da Python, non dal modello. Estremi compresi, tranne quando
+la fine ha lo stesso giorno del mese dell'inizio ("dal 15/12 al 15/01"): lì il periodo finisce il giorno prima.
 
 Ogni blocco elaborato si salva in dati/blocchi/ (solo i campi che servono qui): così il calcolo si può rifare
 in ogni momento con tutte le fatture arrivate fino a quel giorno. I ratei a una data sono completi solo
@@ -43,6 +44,10 @@ def quota_alla_data(data_fattura: Optional[str], inizio: Optional[str], fine: Op
     inizio, fine = date.fromisoformat(inizio or fine), date.fromisoformat(fine or inizio)
     if fine < inizio:
         inizio, fine = fine, inizio
+    # Periodi "dal 15/12 al 15/01" o "dal 15/11/2026 al 15/11/2027": il giorno finale è l'inizio del periodo
+    # successivo, quindi non si conta (regola dell'amministrazione): 31 giorni, non 32; 365 (o 366), non 366.
+    if fine.day == inizio.day and fine > inizio:
+        fine -= timedelta(days=1)
     giorno_fattura, d = date.fromisoformat(data_fattura), date.fromisoformat(chiusura)
     if giorno_fattura <= d and fine > d:
         tipo, dal, al = "risconto", max(inizio, d + timedelta(days=1)), fine
