@@ -50,6 +50,15 @@ def test_rate_del_fornitore_una_riga_per_rata(monkeypatch, tmp_path):
     assert "dimmi il numero" not in scadenziario.segna_saldata("Contoso Media", "77")
 
 
+def test_messaggio_scadenze_con_le_gia_scadute():
+    from datetime import date
+    scadenziario.aggiungi(scadenziario.voce_da_fattura(fattura(), "scade il 12/10/2026"))
+    scadenziario.aggiungi(scadenziario.voce_da_fattura(fattura(numero="INV-0043"), "scade il 30/10/2026"))
+    testo = scadenziario.testo_scadenze(scadenziario.da_pagare(), oggi=date(2026, 10, 26))
+    assert testo == ("GIÀ SCADUTE (ancora da pagare):\n- 12/10/2026 Northwind BV n. INV-0042: 1.200,00 €\n\n"
+                     "Da pagare nei prossimi 15 giorni:\n- 30/10/2026 Northwind BV n. INV-0043: 1.200,00 €")
+
+
 def test_rate_e_termini_detti_in_chat():
     voce = scadenziario.voce_da_fattura(fattura(), "50% a 30 gg DF, 50% a 60 gg DF")
     assert [r["scadenza"] for r in voce["rate"]] == ["2026-10-30", "2026-11-29"]

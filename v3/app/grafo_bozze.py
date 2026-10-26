@@ -153,12 +153,12 @@ def _descrivi(stato: StatoBozza) -> str:
     valuta = d.get("valuta") or "?"
     in_valuta = lambda c: "?" if d.get(c) is None else euro(d[c]).replace("€", valuta)
     righe = [f"- Fornitore: {d.get('fornitore')} ({d.get('paese_fornitore') or '?'}) - P.IVA {d.get('partita_iva')}",
-             f"- Fattura n. {d.get('numero')} del {d.get('data_emissione')}, scadenza {d.get('data_scadenza')}"
+             f"- Fattura n. {d.get('numero')} del {reg.data_it(d.get('data_emissione'))}, scadenza {reg.data_it(d.get('data_scadenza'))}"
              + (" (nessuna scadenza sulla fattura)" if d.get("scadenza_assente") else ""),
              f"- Imponibile {in_valuta('imponibile_cent')} + IVA {in_valuta('iva_cent')} = totale "
              f"{in_valuta('totale_cent')} (regime IVA: {str(d.get('regime_iva')).replace('_', ' ')})"]
     if valuta not in ("EUR", "?") and d.get("totale_eur_cent") is not None:
-        righe.append(f"- In euro (cambio BdI {d.get('cambio_bdi')} del {d.get('data_cambio')}): imponibile "
+        righe.append(f"- In euro (cambio BdI {d.get('cambio_bdi')} del {reg.data_it(d.get('data_cambio'))}): imponibile "
                      f"{euro(d.get('imponibile_eur_cent'))} + IVA {euro(d.get('iva_eur_cent'))} = "
                      f"totale {euro(d.get('totale_eur_cent'))}")
     righe += [f"AVVISO: {a}" for a in stato.get("avvisi", [])]
@@ -223,7 +223,7 @@ def chiedi_mancante(stato: StatoBozza) -> dict:
                    f"(emissione + 30 giorni): va bene, mi dici un'altra data, o scrivi \"nessuna\"?")
     elif campo == "cambio_manuale":
         domanda = (f"Non trovo il cambio Banca d'Italia {stato['dati'].get('valuta')}/EUR del "
-                   f"{stato['dati'].get('data_emissione')}: me lo dici? (quantità di valuta per 1 euro, es. 1,1590)")
+                   f"{reg.data_it(stato['dati'].get('data_emissione'))}: me lo dici? (quantità di valuta per 1 euro, es. 1,1590)")
     else:
         domanda = f"Non trovo {ETICHETTE[campo]}: me lo dici?"
     if stato.get("nota"):

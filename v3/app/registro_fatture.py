@@ -75,6 +75,11 @@ def svuota_registro() -> None:
 # PICCOLI AIUTI
 # ---------------------------------------------------------------------------
 
+def data_it(iso: Optional[str]) -> str:
+    """'2026-09-30' -> '30/09/2026' (solo per mostrare: nel registro le date restano AAAA-MM-GG)."""
+    return f"{iso[8:10]}/{iso[5:7]}/{iso[:4]}" if iso and len(iso) >= 10 else (iso or "?")
+
+
 def centesimi_in_euro(centesimi: Optional[int]) -> str:
     """146400 -> '1.464,00 €'  (solo per mostrare i numeri: i conti restano in centesimi)."""
     if centesimi is None:
@@ -102,8 +107,8 @@ def _trova(fatture: list, id_fattura: str) -> Optional[dict]:
 
 def _in_breve(f: dict) -> str:
     stato = "ANNULLATA" if f["annullata"] else f["stato_pagamento"].replace("_", " ")
-    return (f"{f['id']} | {f['fornitore']} | n. {f['numero']} | emessa {f['data_emissione']} | "
-            f"scade {f['data_scadenza'] or '?'} | totale {centesimi_in_euro(f['totale_cent'])} | {stato}")
+    return (f"{f['id']} | {f['fornitore']} | n. {f['numero']} | emessa {data_it(f['data_emissione'])} | "
+            f"scade {data_it(f['data_scadenza'])} | totale {centesimi_in_euro(f['totale_cent'])} | {stato}")
 
 
 # ---------------------------------------------------------------------------

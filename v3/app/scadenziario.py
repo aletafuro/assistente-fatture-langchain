@@ -189,6 +189,25 @@ def _giorno(valore):
     return valore.date() if hasattr(valore, "date") and callable(valore.date) else valore
 
 
+def testo_scadenze(righe_da_pagare: list, oggi: Optional[date] = None) -> str:
+    """Messaggio per la chat: prima le GIÀ SCADUTE, poi quelle in arrivo; importi come li scrive l'amministrazione."""
+    import registro_fatture as reg
+    oggi = oggi or date.today()
+
+    def riga(r):
+        importo = reg.centesimi_in_euro(round(r["Importo EURO"] * 100)) if r["Importo EURO"] is not None else "importo ?"
+        return (f"- {_giorno(r['Data di Scadenza']):%d/%m/%Y} {r['Fornitore']} n. {r['Numero Fattura']}: {importo}"
+                + (f" ({r['Rata']})" if r["Rata"] else ""))
+    scadute = [r for r in righe_da_pagare if r["Data di Scadenza"] and _giorno(r["Data di Scadenza"]) < oggi]
+    in_arrivo = [r for r in righe_da_pagare if r not in scadute]
+    parti = []
+    if scadute:
+        parti.append("GIÀ SCADUTE (ancora da pagare):\n" + "\n".join(riga(r) for r in scadute))
+    if in_arrivo:
+        parti.append("Da pagare nei prossimi 15 giorni:\n" + "\n".join(riga(r) for r in in_arrivo))
+    return "\n\n".join(parti) or "Nessuna fattura da pagare nei prossimi 15 giorni."
+
+
 # ---------------------------------------------------------------------------
 # DA UNA FATTURA LETTA A UNA VOCE DELLO SCADENZIARIO
 # ---------------------------------------------------------------------------

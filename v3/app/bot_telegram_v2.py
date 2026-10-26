@@ -233,9 +233,7 @@ async def comando_scadenze(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     if not righe:
         await invia(update, "Nessuna fattura da pagare nei prossimi 15 giorni.")
         return
-    await invia(update, "Da pagare entro 15 giorni:\n" + "\n".join(
-        f"- {scadenziario._giorno(r['Data di Scadenza']):%d/%m} {r['Fornitore']} n. {r['Numero Fattura']}: "
-        f"{r['Importo EURO'] or '?'} €" + (f" ({r['Rata']})" if r["Rata"] else "") for r in righe))
+    await invia(update, scadenziario.testo_scadenze(righe))
 
 
 def testo_per_il_bot(update: Update, nome_bot: str, id_bot: int) -> Optional[str]:
