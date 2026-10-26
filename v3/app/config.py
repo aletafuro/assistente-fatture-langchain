@@ -43,6 +43,8 @@ CARTELLA_SCADENZIARIO = Path(os.getenv("CARTELLA_SCADENZIARIO", DATI / "scadenzi
 FILE_TERMINI = CARTELLA_SCADENZIARIO / os.getenv("NOME_FILE_TERMINI", "Termini Di Pagamento Scadenziario Fatture.xlsx")
 # Se attivo, ogni fattura confermata in chat finisce anche nello scadenziario annuale (scadenziario.py).
 SCADENZIARIO_ANNUALE = os.getenv("SCADENZIARIO_ANNUALE", "").lower() in ("1", "si", "sì", "true")
+# Originali delle fatture su Google Drive (0 = no, es. quando sono già in una cartella condivisa dell'azienda).
+ARCHIVIA_SU_DRIVE = os.getenv("ARCHIVIA_SU_DRIVE", "1").lower() not in ("0", "no", "false")
 
 # La nostra azienda: compare in ogni fattura come CLIENTE, mai come fornitore.
 # Si imposta nel .env (non nel codice): lo stesso programma serve aziende diverse.

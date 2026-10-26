@@ -305,7 +305,7 @@ def registra(stato: StatoBozza) -> dict:
         rag_fatture.aggiungi(reg.trova_fattura(esito["id"]))
     except Exception:
         pass
-    return {"esito": "\n".join(righe)}
+    return {"esito": "\n".join(r for r in righe if r)}
 
 
 def annulla(stato: StatoBozza) -> dict:

@@ -27,6 +27,10 @@ def _nome_su_drive(f: dict, estensione: str) -> str:
 
 
 def archivia_fattura(id_fattura: str) -> str:
+    """Testo per l'utente; "" se l'archiviazione su Drive è spenta (ARCHIVIA_SU_DRIVE=0: originali già altrove)."""
+    import config
+    if not config.ARCHIVIA_SU_DRIVE:
+        return ""
     f = reg.trova_fattura(id_fattura)
     if f is None:
         return f"Nessuna fattura con id {id_fattura}."

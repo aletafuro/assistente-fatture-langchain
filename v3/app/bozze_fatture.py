@@ -268,7 +268,7 @@ def conferma_bozza(id_bozza: str) -> str:
     # Avviso configurabile se la fattura supera la soglia del .env.
     sopra_soglia = avvisi.controlla_importo(reg.trova_fattura(esito["id"]))
     return (esito["messaggio"] + "".join(f"\nAVVISO: {a}" for a in esito["avvisi"])
-            + f"\n{esito_drive}"
+            + (f"\n{esito_drive}" if esito_drive else "")
             + (f"\nAVVISO SOGLIA (inviato anche ai destinatari degli avvisi): {sopra_soglia}" if sopra_soglia else ""))
 
 
