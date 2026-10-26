@@ -145,8 +145,10 @@ async def comando_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
              "Mandami una fattura come PDF, foto (meglio come file), vocale (numeri cifra per cifra) o testo:\n"
              "ti guiderò passo passo fino alla registrazione.\n"
              "Puoi anche chiedermi riepiloghi, scadenze, cosa hai comprato, o dirmi che hai pagato una fattura.\n"
-             "Per il lavoro del mese scrivi /mese: mi mandi tutte le fatture e gli estratti conto, io ti restituisco "
-             "registrazione contabile, scadenziario e controvalori in euro.")
+             "Ogni fattura confermata va nello scadenziario (se è attivo); /scadenze mostra cosa pagare a breve, "
+             "/saldata Fornitore numero la segna come pagata.\n"
+             "Per la registrazione del mese: /registra ottobre elabora la cartella condivisa del mese "
+             "(oppure /mese per mandarmi le fatture qui in chat).")
     domanda = grafo_bozze.domanda_in_sospeso(str(update.effective_chat.id))
     if domanda:
         testo += f"\n\nHai una fattura in sospeso. La mia ultima domanda era:\n{domanda}"
@@ -161,6 +163,56 @@ async def comando_mese(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     await invia(update, "Raccolta del mese aperta. Mandami le fatture (PDF o foto, anche tutte insieme o in uno ZIP) "
                         "e gli estratti conto (Excel Amex, PDF della carta UniCredit): li riconosco da solo.\n"
                         "Quando hai finito scrivi \"elabora\". Per lasciar perdere scrivi \"annulla\".")
+
+
+async def comando_registra(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """/registra ottobre: elabora il blocco messo nella cartella condivisa; i risultati restano lì."""
+    if not await v1.autorizzato(update):
+        return
+    testo = " ".join(context.args)
+    cartella = raccolta_mese.trova_cartella_mese(testo) if testo else None
+    if cartella is None:
+        await invia(update, "Dimmi il mese della cartella, es. \"/registra ottobre\" o \"/registra 10 Ottobre\".")
+        return
+    await invia(update, f"Elaboro la cartella \"{cartella.name}\": può volerci qualche minuto.")
+    await update.effective_chat.send_action(ChatAction.TYPING)
+    try:
+        messaggio, _ = await asyncio.to_thread(raccolta_mese.elabora_cartella, cartella)
+    except Exception as errore:
+        log.exception("Registrazione del mese")
+        avvisi.errore_tecnico("Registrazione del mese", errore)
+        messaggio = "Scusa, l'elaborazione non è riuscita: riprova tra poco."
+    await invia(update, messaggio)
+
+
+async def comando_saldata(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """/saldata Fornitore [numero]: nello scadenziario la fattura diventa "saldata"."""
+    if not await v1.autorizzato(update):
+        return
+    import scadenziario
+    if not context.args:
+        await invia(update, "Scrivi \"/saldata Fornitore numero\", es. \"/saldata Contoso 2026/15\".")
+        return
+    # L'ultima parola è il numero se contiene una cifra; il resto è il fornitore.
+    *nome, ultima = context.args
+    numero = ultima if nome and any(c.isdigit() for c in ultima) else None
+    fornitore = " ".join(nome if numero else context.args)
+    await invia(update, await asyncio.to_thread(scadenziario.segna_saldata, fornitore, numero))
+
+
+async def comando_scadenze(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """/scadenze: fatture ancora da pagare nello scadenziario, entro i prossimi 15 giorni."""
+    if not await v1.autorizzato(update):
+        return
+    import scadenziario
+    from datetime import date, timedelta
+    righe = await asyncio.to_thread(scadenziario.da_pagare, (date.today() + timedelta(days=15)).isoformat())
+    if not righe:
+        await invia(update, "Nessuna fattura da pagare nei prossimi 15 giorni.")
+        return
+    await invia(update, "Da pagare entro 15 giorni:\n" + "\n".join(
+        f"- {scadenziario._giorno(r['Data di Scadenza']):%d/%m} {r['Fornitore']} n. {r['Numero Fattura']}: "
+        f"{r['Importo EURO'] or '?'} €" + (f" ({r['Rata']})" if r["Rata"] else "") for r in righe))
 
 
 async def messaggio_testo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -252,6 +304,9 @@ def main() -> None:
     app.add_handler(CommandHandler("controllo", v1.comando_controllo))
     app.add_handler(CommandHandler("anagrafica", comando_anagrafica))
     app.add_handler(CommandHandler("mese", comando_mese))
+    app.add_handler(CommandHandler("registra", comando_registra))
+    app.add_handler(CommandHandler("saldata", comando_saldata))
+    app.add_handler(CommandHandler("scadenze", comando_scadenze))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, messaggio_testo))
     app.add_handler(MessageHandler(filters.PHOTO, messaggio_foto))
     app.add_handler(MessageHandler(filters.Document.ALL, messaggio_documento))

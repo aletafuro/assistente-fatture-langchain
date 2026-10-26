@@ -60,7 +60,8 @@ def estrai_da_testo(testo: str, nome: str = "testo", grezzo: dict = None) -> dic
     return in_dizionario(nome, risposta, testo)
 
 
-def estrai_da_pdf(percorso: Path, grezzo: dict = None) -> dict:
+def estrai_da_pdf(percorso: Path, grezzo: dict = None, grezzo_foto: dict = None) -> dict:
+    """grezzo_foto = risposta già salvata della lettura dall'immagine (vedi _completa_dall_immagine)."""
     try:
         testo = leggi_pdf(percorso)
     except Exception:
@@ -68,6 +69,9 @@ def estrai_da_pdf(percorso: Path, grezzo: dict = None) -> dict:
     if not testo.strip():
         return _estrai_da_scansione(percorso, grezzo)
     dati = estrai_da_testo(testo, percorso.name, grezzo)
+    dati["testo"] = testo          # per i controlli fatti da Python (P.IVA del cliente, parole della descrizione)
+    if dati.get("tipo_documento") != "altro" and not all(dati.get(c) for c in ("fornitore", "numero", "data_emissione")):
+        _completa_dall_immagine(percorso, dati, grezzo_foto)
     # Fattura elettronica italiana (formato SDI): paese e scadenza li stabilisce Python, non il modello.
     dati["formato_sdi"] = formato_sdi(testo)
     if dati["formato_sdi"]:
@@ -77,6 +81,37 @@ def estrai_da_pdf(percorso: Path, grezzo: dict = None) -> dict:
             dati["data_scadenza"] = max(scadenze)      # più rate: l'ultima (le rate si vedono nelle note)
             dati["scadenze_sdi"] = scadenze
     return dati
+
+
+CAMPI_DALL_IMMAGINE = ("fornitore", "numero", "data_emissione", "data_scadenza", "inizio_periodo", "fine_periodo")
+
+
+def _completa_dall_immagine(percorso: Path, dati: dict, grezzo_foto: dict = None) -> None:
+    """
+    Alcuni PDF hanno il testo "incollato" (visto su fatture vere: numero e date attaccati alle parole vicine):
+    il modello non trova numero o data, che invece sulla pagina si vedono benissimo. Oppure il nome del fornitore
+    c'è solo nel logo (visto su una ricevuta di parcheggio). Si disegna la prima
+    pagina come immagine e la si legge come una foto; si prendono SOLO i campi che mancavano.
+    """
+    if grezzo_foto is None:
+        import tempfile
+        try:
+            import pypdfium2
+            pagina = pypdfium2.PdfDocument(str(percorso))[0]
+            immagine = Path(tempfile.mkdtemp()) / "pagina1.png"
+            pagina.render(scale=2).to_pil().save(immagine)
+        except Exception:
+            return                                  # non si riesce a disegnare: resta la lettura dal testo
+        dall_immagine = estrai_da_foto(immagine)
+    else:
+        dall_immagine = estrai_da_foto(Path("pagina1.png"), grezzo_foto)
+    presi = [c for c in CAMPI_DALL_IMMAGINE if not dati.get(c) and dall_immagine.get(c)]
+    for campo in presi:
+        dati[campo] = dall_immagine[campo]
+    dati["_grezzo_foto"] = dall_immagine["_grezzo"]
+    if presi:
+        dati.setdefault("note_lettura", []).append(
+            f"letti dall'immagine della pagina: {', '.join(c.replace('_', ' ') for c in presi)}")
 
 
 def _estrai_da_scansione(percorso: Path, grezzo: dict = None) -> dict:
@@ -125,14 +160,14 @@ def estrai_da_foto(percorso: Path, grezzo: dict = None) -> dict:
         raise _servizio_non_disponibile(errore)
 
 
-def estrai_da_file(percorso: Path, grezzo: dict = None) -> dict:
+def estrai_da_file(percorso: Path, grezzo: dict = None, grezzo_foto: dict = None) -> dict:
     """Sceglie da solo il metodo giusto guardando l'estensione del file."""
     percorso = Path(percorso)
     if not percorso.exists():
         raise ErroreEstrazione(f"Il file {percorso} non esiste.")
     estensione = percorso.suffix.lower()
     if estensione == ".pdf":
-        return estrai_da_pdf(percorso, grezzo)
+        return estrai_da_pdf(percorso, grezzo, grezzo_foto)
     if estensione in FORMATI_IMMAGINE:
         return estrai_da_foto(percorso, grezzo)
     raise ErroreEstrazione(f"Formato {estensione} non supportato: mandami un PDF, una foto JPG/PNG o scrivimi i dati.")

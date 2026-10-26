@@ -67,6 +67,7 @@ class StatoBozza(TypedDict, total=False):
     percorso_originale: Optional[str]   # file ricevuto (PDF, foto, audio, o .txt creato per il testo)
     testo: Optional[str]                # testo scritto o trascritto (se non è un file da leggere)
     nota_utente: Optional[str]          # testo scritto INSIEME al file (didascalia), es. "data emissione 01/09/2026"
+    testo_documento: Optional[str]      # testo del PDF, per i controlli Python (nostra P.IVA, rate del fornitore)
     dati: dict
     mancanti: list
     avvisi: list
@@ -175,7 +176,8 @@ def estrai(stato: StatoBozza) -> dict:
             dati = estrai_da_file(stato["percorso_originale"])
     except ErroreEstrazione as errore:
         return {"decisione": "errore", "esito": f"Non ho potuto leggere la fattura: {errore}"}
-    dati = {c: dati.get(c) for c in CAMPI} | {"file": dati.get("file"),
+    testo_documento = dati.get("testo")
+    dati = {c: dati.get(c) for c in CAMPI} | {"file": dati.get("file"), "tipo_documento": dati.get("tipo_documento"),
                                                "percorso_originale": stato["percorso_originale"]}
     dati["regime_iva"] = dati["regime_iva"] or "ordinario"
     # Testo scritto insieme al file (in prova: PDF + "data emissione 01/09/2026", e il dato veniva ignorato):
@@ -188,12 +190,15 @@ def estrai(stato: StatoBozza) -> dict:
                     dati[campo] = dalla_nota[campo]
         except ErroreEstrazione:
             pass
-    return {"dati": dati, "decisione": ""}
+    return {"dati": dati, "decisione": "", "testo_documento": testo_documento}
 
 
 def controlla(stato: StatoBozza) -> dict:
+    from fatture_comuni import piva_cliente_presente
     b = {"dati": dict(stato["dati"])}
     boz._aggiorna_controlli(b)                 # stessi controlli della v1 (+ estero, valuta, anagrafica)
+    if piva_cliente_presente(stato.get("testo_documento")) is False:
+        b["avvisi"].append("Sulla fattura manca la nostra partita IVA: chiedi al fornitore di correggerla.")
     return {"dati": b["dati"], "mancanti": b["mancanti"], "avvisi": b["avvisi"],
             "proposta_scadenza": b["proposta_scadenza"]}
 
@@ -284,6 +289,14 @@ def registra(stato: StatoBozza) -> dict:
         righe += [f"ANAGRAFICA: {a}" for a in anagrafica_esteri.aggiorna_da_fattura(reg.trova_fattura(esito["id"]))]
     except Exception as errore:
         righe.append(f"AVVISO: anagrafica fornitori esteri non aggiornata ({errore}).")
+    if config.SCADENZIARIO_ANNUALE:             # amministrazione: ogni fattura ricevuta va nello scadenziario
+        try:
+            import scadenziario
+            voce = scadenziario.voce_da_fattura(stato["dati"] | {"testo": stato.get("testo_documento")},
+                                                stato.get("nota_utente"))
+            righe.append(f"SCADENZIARIO: {scadenziario.aggiungi(voce)}")
+        except Exception as errore:
+            righe.append(f"AVVISO: scadenziario non aggiornato ({errore}).")
     sopra = avvisi.controlla_importo(reg.trova_fattura(esito["id"]))
     if sopra:
         righe.append(f"AVVISO SOGLIA: {sopra}")

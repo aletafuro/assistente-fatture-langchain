@@ -82,10 +82,17 @@ class DatiFattura(BaseModel):
                     "'Invoice date', 'Date of issue', 'Issued' oppure, in una ricevuta ('Receipt'), 'Date paid' / "
                     "'Payment date'. Lascia vuoto solo se il documento non ha nessuna di queste date "
                     "(la data di scadenza e le date del periodo non valgono).")
+    inizio_periodo: Optional[str] = Field(
+        default=None,
+        description="Se la fattura indica il periodo a cui si riferisce (periodo di fatturazione, di servizio o "
+                    "di competenza, anche nella descrizione delle righe: es. 'billing period August 1, 2026 - "
+                    "September 1, 2026', 'dal 15/12/2026 al 15/01/2027', 'competenza dicembre 2026', "
+                    "'services for December 2026'), la data di INIZIO periodo copiata come scritta. Se è indicato "
+                    "solo un mese, il primo giorno di quel mese (es. '01/12/2026'). Altrimenti vuoto.")
     fine_periodo: Optional[str] = Field(
         default=None,
-        description="Se la fattura indica un periodo di fatturazione (es. 'billing period August 1, 2026 - "
-                    "September 1, 2026'), la data di FINE periodo copiata come scritta. Altrimenti vuoto.")
+        description="Data di FINE dello stesso periodo, copiata come scritta (es. 'September 1, 2026'). Se è "
+                    "indicato solo un mese, l'ultimo giorno di quel mese (es. '31/12/2026'). Altrimenti vuoto.")
     data_scadenza: Optional[str] = Field(
         default=None,
         description="Data di scadenza del pagamento copiata ESATTAMENTE come scritta. "
@@ -125,6 +132,17 @@ logging.getLogger("pypdf").setLevel(logging.ERROR)   # niente messaggi tecnici d
 def formato_sdi(testo: str) -> bool:
     """Le fatture italiane stampate dallo SDI hanno sempre queste due sezioni; quelle estere mai."""
     return "Cedente/prestatore" in testo and "Cessionario/committente" in testo
+
+
+def piva_cliente_presente(testo: Optional[str]) -> Optional[bool]:
+    """
+    Sulla fattura ci deve essere la NOSTRA partita IVA (regola dell'amministrazione): se manca, si chiede al
+    fornitore di correggere il documento. Si cerca nel testo anche scritta con spazi o punti ("070 487 709 65").
+    None se non si può dire (nessun testo, es. foto, o partita IVA dell'azienda non impostata).
+    """
+    if not testo or not config.AZIENDA_PIVA:
+        return None
+    return config.AZIENDA_PIVA in re.sub(r"[\s.\-]", "", testo)
 
 
 def scadenze_sdi(testo: str) -> list:
@@ -376,7 +394,8 @@ def in_dizionario(nome_file: str, dati: DatiFattura, testo: Optional[str] = None
     # c'era "Service Date 8/31/2026" (per forza americana), quindi 9/1 = 1 settembre, non 9 gennaio.
     date_nel_testo = re.findall(r"\b\d{1,2}/\d{1,2}/\d{4}\b", testo or "")
     formato_date = "US" if any(_per_forza_americana(d) for d in (dati.data_emissione, dati.data_scadenza,
-                                                                  dati.fine_periodo, *date_nel_testo)) else paese
+                                                                  dati.inizio_periodo, dati.fine_periodo,
+                                                                  *date_nel_testo)) else paese
     valuta = normalizza_valuta(dati.valuta)
     if valuta is None and paese == "IT":
         valuta = "EUR"
@@ -390,6 +409,7 @@ def in_dizionario(nome_file: str, dati: DatiFattura, testo: Optional[str] = None
         "indirizzo_fornitore": vuoto_se_niente(dati.indirizzo_fornitore),
         "numero": pulisci_numero(dati.numero),
         "data_emissione": normalizza_data(dati.data_emissione, formato_date),
+        "inizio_periodo": normalizza_data(dati.inizio_periodo, formato_date),
         "fine_periodo": normalizza_data(dati.fine_periodo, formato_date),
         "data_scadenza": normalizza_data(dati.data_scadenza, formato_date),
         "valuta": valuta,

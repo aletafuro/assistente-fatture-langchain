@@ -33,6 +33,17 @@ RIEPILOGHI = DATI / "riepiloghi"
 ANAGRAFICA_ESTERI = DATI / "anagrafica_fornitori_esteri.json"
 CAMBI_BDI = DATI / "cambi_bdi.json"          # cambi già scaricati dalla Banca d'Italia (per non richiederli)
 
+# Cartelle condivise con l'amministrazione (es. su ownCloud). Se non sono impostate si usa dati/.
+#   CARTELLA_REGISTRAZIONE: una sottocartella per mese ("10 Ottobre") con il blocco delle fatture estere;
+#                           il bot ci scrive registrazione contabile e riepilogo.
+#   CARTELLA_SCADENZIARIO:  il file dei termini di pagamento (lo aggiorna l'amministrazione) e lo
+#                           scadenziario annuale (lo aggiorna il bot a ogni fattura ricevuta).
+CARTELLA_REGISTRAZIONE = Path(os.getenv("CARTELLA_REGISTRAZIONE", DATI / "registrazione"))
+CARTELLA_SCADENZIARIO = Path(os.getenv("CARTELLA_SCADENZIARIO", DATI / "scadenziario"))
+FILE_TERMINI = CARTELLA_SCADENZIARIO / os.getenv("NOME_FILE_TERMINI", "Termini Di Pagamento Scadenziario Fatture.xlsx")
+# Se attivo, ogni fattura confermata in chat finisce anche nello scadenziario annuale (scadenziario.py).
+SCADENZIARIO_ANNUALE = os.getenv("SCADENZIARIO_ANNUALE", "").lower() in ("1", "si", "sì", "true")
+
 # La nostra azienda: compare in ogni fattura come CLIENTE, mai come fornitore.
 # Si imposta nel .env (non nel codice): lo stesso programma serve aziende diverse.
 AZIENDA_NOME = os.getenv("AZIENDA_NOME") or None
@@ -55,5 +66,5 @@ FILE_DI_PROVA = BASE / "file_di_prova"
 VALUTAZIONE = BASE / "valutazione"
 GOLDEN_SET = VALUTAZIONE / "golden_set.json"
 
-for cartella in (DATI, RICEVUTI, RIEPILOGHI, LOG, SEGRETI):
+for cartella in (DATI, RICEVUTI, RIEPILOGHI, LOG, SEGRETI, CARTELLA_SCADENZIARIO):
     cartella.mkdir(parents=True, exist_ok=True)

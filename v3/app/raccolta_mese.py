@@ -6,8 +6,12 @@ RACCOLTA DEL MESE: le fatture e gli estratti conto mandati in chat, poi elaborat
    file       -> PDF, foto, Excel o uno ZIP con la cartella del mese: finiscono nella raccolta
    elabora    -> gli estratti conto si riconoscono da soli (Amex = Excel con "Foreign Spend Amount",
                  UniCredit = PDF "estratto conto carta di credito"), il resto sono fatture;
-                 si esegue elabora_mese e il bot rimanda in chat i file prodotti
+                 si esegue elabora_mese e il bot rimanda in chat registrazione e riepilogo
    annulla    -> la raccolta si chiude senza elaborare
+
+Di solito però l'amministrazione mette il blocco nella CARTELLA CONDIVISA della registrazione, in una
+sottocartella per mese ("10 Ottobre"): con "/registra ottobre" il bot la elabora e scrive lì i risultati
+(elabora_cartella). Gli estratti conto non si rimandano: li ha già lei.
 
 La logica sta qui, separata dalla chat: si prova con i test senza Telegram.
 """
@@ -128,27 +132,54 @@ def stato(chat_id) -> str:
             + ". Quando hai finito scrivi \"elabora\" (oppure \"annulla\").")
 
 
-def elabora(chat_id, mese: Optional[str] = None) -> tuple:
-    """Esegue l'elaborazione del mese sulla raccolta. Restituisce (messaggio, file da mandare in chat)."""
+def _esegui(cartella: Path, uscita: Path, mese: Optional[str] = None) -> tuple:
+    """Elabora una cartella con il blocco del mese. Restituisce (messaggio, file creati)."""
     import elabora_mese
-    cartella = aperta(chat_id)
-    amex = next((p for p in cartella.iterdir() if riconosci_estratto(p) == "amex"), None)
-    unicredit = next((p for p in cartella.iterdir() if riconosci_estratto(p) == "unicredit"), None)
-    risultato = elabora_mese.elabora(cartella, amex, unicredit)
-    mese = mese or _mese_prevalente(risultato["fatture"])
-    uscita = cartella / "risultati"
-    creati = elabora_mese.scrivi_file(risultato, uscita, mese, amex)
+    file = [p for p in cartella.iterdir() if p.is_file()]
+    amex = next((p for p in file if riconosci_estratto(p) == "amex"), None)
+    unicredit = next((p for p in file if riconosci_estratto(p) == "unicredit"), None)
+    risultato = elabora_mese.elabora(cartella, amex, unicredit, mese)
+    mese = mese or risultato.get("mese") or _mese_prevalente(risultato["fatture"])
+    creati = elabora_mese.scrivi_file(risultato, uscita, mese)
     estere = sum(f["estera"] for f in risultato["fatture"])
     senza_euro = sum(1 for f in risultato["fatture"] if f["estera"] and f["importo_eur"] is None)
+    mancanti = sum(1 for f in risultato["fatture"] if not f.get("nello_scadenziario", True))
     messaggio = (f"Elaborato il mese {mese}: {len(risultato['fatture'])} fatture ({estere} estere), "
                  f"{len(risultato['saltati'])} file saltati.\n"
                  f"Estratti conto usati: {'Amex' if amex else '-'}, {'UniCredit' if unicredit else '-'}.\n"
                  + (f"ATTENZIONE: {senza_euro} fatture estere senza controvalore in euro, vedi il riepilogo.\n"
                     if senza_euro else "")
-                 + "Ti mando i file: registrazione contabile (solo estere), scadenziario, "
-                 + ("estratto Amex con i controvalori, " if amex else "") + "riepilogo da controllare.")
-    chiudi(chat_id)
+                 + (f"{mancanti} fatture non sono nello scadenziario e non risultano pagate con carta: "
+                    "le trovi nel riepilogo.\n" if mancanti else ""))
     return messaggio, creati
+
+
+def elabora(chat_id, mese: Optional[str] = None) -> tuple:
+    """Raccolta fatta in chat: i risultati si rimandano in chat. Restituisce (messaggio, file da mandare)."""
+    cartella = aperta(chat_id)
+    messaggio, creati = _esegui(cartella, cartella / "risultati", mese)
+    chiudi(chat_id)
+    return messaggio + "Ti mando la registrazione contabile e il riepilogo.", creati
+
+
+def trova_cartella_mese(testo: str) -> Optional[Path]:
+    """
+    Nella cartella condivisa della registrazione: "10 Ottobre", "ottobre" o "10" -> la sottocartella del mese.
+    Se ce ne sono più di una con lo stesso nome (anni diversi), la più recente.
+    """
+    import elabora_mese
+    if not config.CARTELLA_REGISTRAZIONE.exists():
+        return None
+    cercato = elabora_mese.mese_della_cartella(Path(testo.strip()))
+    candidate = [c for c in config.CARTELLA_REGISTRAZIONE.iterdir() if c.is_dir()
+                 and cercato and elabora_mese.mese_della_cartella(c) == cercato]
+    return max(candidate, key=lambda c: c.stat().st_mtime) if candidate else None
+
+
+def elabora_cartella(cartella: Path) -> tuple:
+    """Blocco messo dall'amministrazione nella cartella condivisa: i risultati vanno nella stessa cartella."""
+    messaggio, creati = _esegui(cartella, cartella)
+    return messaggio + f"Registrazione contabile e riepilogo sono nella cartella \"{cartella.name}\".", creati
 
 
 def _mese_prevalente(fatture: list) -> str:

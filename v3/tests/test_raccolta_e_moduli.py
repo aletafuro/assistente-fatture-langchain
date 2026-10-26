@@ -68,11 +68,11 @@ def test_elabora_passa_gli_estratti_giusti(monkeypatch, tmp_path):
     shutil.copy(PROVE / "estratto_unicredit_prova_09-2026.pdf", cartella / "b.pdf")
     visti = {}
 
-    def elabora_finta(c, amex, unicredit):
+    def elabora_finta(c, amex, unicredit, mese=None):
         visti.update(amex=amex.name, unicredit=unicredit.name)
         return {"fatture": [], "saltati": [], "movimenti": []}
     monkeypatch.setattr(elabora_mese, "elabora", elabora_finta)
-    monkeypatch.setattr(elabora_mese, "scrivi_file", lambda r, uscita, mese, amex: [])
+    monkeypatch.setattr(elabora_mese, "scrivi_file", lambda r, uscita, mese: [])
     messaggio, creati = raccolta_mese.elabora(chat, "09-2026")
     assert visti == {"amex": "a.xlsx", "unicredit": "b.pdf"}
     assert "Elaborato il mese 09-2026" in messaggio and raccolta_mese.aperta(chat) is None
@@ -84,3 +84,21 @@ def test_note_brevi_per_la_registrazione():
         "nuovo fornitore: creare l'anagrafica (P.IVA valida)"
     assert nota_anagrafica('Rossi Ltd: partita IVA cambiato da "GB1" a "GB2" (fattura F1 del 2026-09-01).') == \
         'partita IVA cambiato da "GB1" a "GB2" (fattura F1 del 2026-09-01)'
+
+
+def test_numero_e_data_dall_immagine_se_il_testo_non_basta(monkeypatch, tmp_path):
+    """PDF con testo "incollato": numero e data mancano, si leggono dall'immagine della pagina (modello finto)."""
+    import estrazione
+    pdf = next(PROVE.glob("fatture/*.pdf"))
+    monkeypatch.setattr(estrazione, "estrai_da_testo", lambda testo, nome, grezzo=None: {
+        "_grezzo": {}, "file": nome, "numero": None, "data_emissione": None, "tipo_documento": "fattura"})
+    letture = []
+
+    def foto_finta(percorso, grezzo=None):
+        letture.append(percorso.suffix)
+        return {"_grezzo": {"numero": "NC-77"}, "numero": "NC-77", "data_emissione": "2026-09-12"}
+    monkeypatch.setattr(estrazione, "estrai_da_foto", foto_finta)
+    dati = estrazione.estrai_da_pdf(pdf)
+    assert (dati["numero"], dati["data_emissione"]) == ("NC-77", "2026-09-12")
+    assert dati["_grezzo_foto"] == {"numero": "NC-77"} and letture == [".png"]
+    assert dati["note_lettura"][0] == "letti dall'immagine della pagina: numero, data emissione"

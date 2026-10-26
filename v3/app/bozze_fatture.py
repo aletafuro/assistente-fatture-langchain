@@ -133,6 +133,13 @@ def _aggiorna_controlli(b: dict) -> None:
     # L'LLM non calcola date (vedi RELAZIONE, limiti osservati).
     b["proposta_scadenza"] = None
     if not d.get("data_scadenza") and d.get("data_emissione"):
+        import termini                          # termini del fornitore già noti: si usano senza chiedere
+        termine = termini.termine_di(d.get("fornitore") or "")
+        if termine:
+            d["data_scadenza"] = termini.calcola_scadenza(d["data_emissione"], termine)
+            b["mancanti"] = [c for c in b["mancanti"] if c != "data_scadenza"]
+            avvisi.append(f"Scadenza calcolata dai termini del fornitore ({termine}).")
+    if not d.get("data_scadenza") and d.get("data_emissione"):
         proposta = date.fromisoformat(d["data_emissione"]) + timedelta(days=GIORNI_SCADENZA_PROPOSTA)
         b["proposta_scadenza"] = proposta.isoformat()
 

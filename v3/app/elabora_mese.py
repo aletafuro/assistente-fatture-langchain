@@ -2,23 +2,27 @@
 ELABORAZIONE DI UN MESE DI FATTURE (invio "a blocchi")
 ======================================================
 
-L'amministrazione manda tutte le fatture del mese insieme (la prima settimana del mese dopo), più gli
-estratti conto delle carte. Questo modulo:
+L'amministrazione mette tutte le fatture ESTERE del mese in una cartella (es. "10 Ottobre", entro il 15 del
+mese dopo), con gli estratti conto delle carte. Questo modulo:
 
   1. legge ogni PDF UNA volta sola (la lettura resta salvata in dati/letture/: rilanciare non costa);
   2. scarta le copie di cortesia quando c'è l'originale, e i documenti che non sono fatture
      (contabili di bonifico, avvisi, guide);
   3. per le fatture ESTERE calcola il controvalore in euro: carta Amex -> carta UniCredit -> cambio BdI;
-  4. calcola la data di registrazione e la scadenza (dalla fattura o dai termini del fornitore);
-  5. aggiorna l'anagrafica dei fornitori esteri e mette le modifiche nella colonna Note;
-  6. scrive i file nel layout dell'amministrazione:
-       - Registrazione contabile  (SOLO fatture estere)
-       - Scadenziario fatture     (italiane ed estere)
-       - copia dell'estratto Amex con importo in valuta, cambio, importo in euro e commissioni
+  4. data di registrazione = ultimo giorno lavorativo del MESE DEL BLOCCO (anche per le fatture arrivate
+     in ritardo, es. una di settembre nel blocco di ottobre);
+  5. aggiorna l'anagrafica dei fornitori esteri e mette le modifiche nella colonna Note; segnala se manca
+     la nostra partita IVA sulla fattura;
+  6. scrive NELLA CARTELLA DEL MESE, nel layout dell'amministrazione:
+       - Registrazione contabile (fogli: registrazione, pagate con carta, non nello scadenziario)
        - un riepilogo di cosa va controllato a mano.
 
+Lo scadenziario NON si tocca (regola del 26/10): si alimenta solo con le fatture mandate per lo scadenziario.
+Il blocco elenca soltanto le fatture che non sono nello scadenziario e non sono pagate con carta, per
+accorgersi di una fattura sfuggita.
+
 Il modello legge (punto 1); tutto il resto è Python.
-Uso:  python app/elabora_mese.py CARTELLA [--amex FILE.xlsx] [--unicredit FILE.pdf] [--uscita CARTELLA]
+Uso:  python app/elabora_mese.py CARTELLA [--amex FILE.xlsx] [--unicredit FILE.pdf] [--mese MM-AAAA]
 """
 
 import argparse
@@ -34,11 +38,14 @@ import anagrafica_esteri
 import cambi_bdi
 import config
 import estratti_conto as ec
+import scadenziario
 import termini
 from estrazione import ErroreEstrazione, ServizioNonDisponibile, estrai_da_file
-from fatture_comuni import PIVA_ESTERO_ASSENTE, e_estero
+from fatture_comuni import PIVA_ESTERO_ASSENTE, e_estero, piva_cliente_presente
 
 LETTURE = config.DATI / "letture"
+MESI = ["gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio", "agosto", "settembre", "ottobre",
+        "novembre", "dicembre"]
 CENT = Decimal("0.01")
 # Parole che, nel nome di un file, indicano una contabile o un documento che NON è una fattura
 # (in prova: "First instalment 4411 and full payment 4410.pdf", "Wire Transfer NWD 18.pdf").
@@ -72,7 +79,11 @@ def leggi(percorso: Path) -> dict:
         memoria = json.loads(salvata.read_text(encoding="utf-8"))
         if "errore" in memoria:
             return memoria | {"file": percorso.name}
-        dati = estrai_da_file(percorso, grezzo=memoria["_grezzo"])      # niente chiamata al modello
+        dati = estrai_da_file(percorso, grezzo=memoria["_grezzo"],      # niente chiamata al modello
+                              grezzo_foto=memoria.get("_grezzo_foto"))
+        if "_grezzo_foto" in dati and "_grezzo_foto" not in memoria:   # immagine letta ora: si salva anche lei
+            salvata.write_text(json.dumps(memoria | {"_grezzo_foto": dati["_grezzo_foto"]}, ensure_ascii=False,
+                                          indent=1), encoding="utf-8")
     else:
         try:
             dati = estrai_da_file(percorso)
@@ -80,7 +91,8 @@ def leggi(percorso: Path) -> dict:
             return {"errore": str(errore), "file": percorso.name}
         except ErroreEstrazione as errore:
             dati = {"errore": str(errore)}
-        salvata.write_text(json.dumps({"_grezzo": dati["_grezzo"]} if "_grezzo" in dati else dati,
+        da_salvare = {c: dati[c] for c in ("_grezzo", "_grezzo_foto") if c in dati} if "_grezzo" in dati else dati
+        salvata.write_text(json.dumps(da_salvare,
                                       ensure_ascii=False, indent=1), encoding="utf-8")
     dati["file"] = percorso.name
     return dati
@@ -193,7 +205,27 @@ def scadenza(fattura: dict) -> tuple:
 # ---------------------------------------------------------------------------
 # 3. ELABORAZIONE DEL MESE
 # ---------------------------------------------------------------------------
-def elabora(cartella: Path, amex: Optional[Path] = None, unicredit: Optional[Path] = None) -> dict:
+def mese_della_cartella(cartella: Path, oggi: Optional[date] = None) -> Optional[str]:
+    """
+    "10 Ottobre" -> "10-2026" (o "Ottobre 2026", "2026-10"). Senza anno: è l'ultimo mese con quel nome
+    già passato (il blocco di dicembre si elabora a gennaio dell'anno dopo).
+    """
+    nome, oggi = cartella.name.lower(), oggi or date.today()
+    anno = re.search(r"\b(20\d{2})\b", nome)
+    numero = next((i + 1 for i, m in enumerate(MESI) if m in nome), None)
+    if numero is None:
+        cifre = re.search(r"\b(\d{1,2})\b", re.sub(r"\b20\d{2}\b", "", nome))
+        numero = int(cifre.group(1)) if cifre and 1 <= int(cifre.group(1)) <= 12 else None
+    if numero is None:
+        return None
+    anno = int(anno.group(1)) if anno else (oggi.year if numero <= oggi.month else oggi.year - 1)
+    return f"{numero:02d}-{anno}"
+
+
+def elabora(cartella: Path, amex: Optional[Path] = None, unicredit: Optional[Path] = None,
+            mese: Optional[str] = None) -> dict:
+    """mese 'MM-AAAA' del blocco (per la data di registrazione); se manca, dal nome della cartella."""
+    mese = mese or mese_della_cartella(cartella)
     esclusi = {p.resolve() for p in (amex, unicredit) if p}
     da_leggere, saltati = file_da_leggere(cartella, esclusi)
     movimenti = (ec.leggi_amex(amex) if amex else []) + (ec.leggi_unicredit(unicredit) if unicredit else [])
@@ -244,8 +276,8 @@ def elabora(cartella: Path, amex: Optional[Path] = None, unicredit: Optional[Pat
         if segno < 0:
             f["importo_valuta"] = -abs(f["importo_valuta"]) if f["importo_valuta"] is not None else None
             f["importo_eur"] = -abs(f["importo_eur"]) if f["importo_eur"] is not None else None
-        if f.get("data_emissione"):
-            f["data_registrazione"] = termini.data_registrazione(f["data_emissione"])
+        if mese or f.get("data_emissione"):
+            f["data_registrazione"] = termini.data_registrazione(mese or f["data_emissione"])
         f["scadenza"], f["fonte_scadenza"] = scadenza(f)
         if not f["scadenza"] and mov:                 # pagata con carta: la "scadenza" è il giorno dell'addebito
             f["scadenza"], f["fonte_scadenza"] = mov.data.isoformat(), "addebito su carta"
@@ -254,6 +286,15 @@ def elabora(cartella: Path, amex: Optional[Path] = None, unicredit: Optional[Pat
         if f["fonte_scadenza"] == "dalla fattura" and f.get("data_emissione") and f["scadenza"] < f["data_emissione"]:
             f.setdefault("note_lettura", []).append("scadenza precedente alla data fattura: controllare")
         f["note"] = list(f.get("note_lettura", []))
+        if piva_cliente_presente(f.get("testo")) is False:
+            f["note"].append("manca la nostra partita IVA sulla fattura: chiedere al fornitore di correggerla")
+        # Competenza in un altro anno (ratei e risconti per la chiusura): quota proporzionale ai giorni.
+        f["competenza"] = termini.quote_fuori_anno(f.get("data_emissione"), f.get("inizio_periodo"),
+                                                   f.get("fine_periodo"), f["importo_eur"])
+        f["note"] += [termini.nota_competenza(q) for q in f["competenza"]]
+        # Solo un controllo: lo scadenziario non si modifica dal blocco.
+        f["nello_scadenziario"] = bool(f.get("movimento")) or f.get("tipo_documento") == "nota_di_credito" or \
+            scadenziario.contiene(f.get("fornitore"), f.get("numero"))
         if f["estera"]:
             try:
                 cambiati = anagrafica_esteri.aggiorna_da_fattura(
@@ -264,7 +305,7 @@ def elabora(cartella: Path, amex: Optional[Path] = None, unicredit: Optional[Pat
                 f["note"].append(f"anagrafica non aggiornata ({errore})")
         fatture.append(f)
 
-    return {"fatture": fatture, "saltati": saltati, "movimenti": movimenti}
+    return {"fatture": fatture, "saltati": saltati, "movimenti": movimenti, "mese": mese}
 
 
 # ---------------------------------------------------------------------------
@@ -274,19 +315,23 @@ def _data_it(iso: Optional[str]):
     return date.fromisoformat(iso) if iso else None
 
 
-def scrivi_file(risultato: dict, uscita: Path, mese: str, amex: Optional[Path] = None) -> list:
-    from openpyxl import Workbook, load_workbook
+def scrivi_file(risultato: dict, uscita: Path, mese: str) -> list:
+    """
+    Nella cartella del mese: la registrazione contabile e il riepilogo. Niente scadenziario e niente copie degli
+    estratti conto (regola del 26/10: gli estratti li ha già l'amministrazione).
+    """
+    from openpyxl import Workbook
     from openpyxl.styles import Font
     uscita.mkdir(parents=True, exist_ok=True)
     creati = []
 
-    def foglio(ws, intestazione, righe, formati=None):
+    def foglio(ws, intestazione, righe):
         ws.append(intestazione)
         for c in ws[1]:
             c.font = Font(bold=True)
         for r in righe:
             ws.append(r)
-        for i, colonna in enumerate(ws.columns):
+        for colonna in ws.columns:
             ws.column_dimensions[colonna[0].column_letter].width = min(55, max(12, *(len(str(c.value or "")) + 2 for c in colonna)))
             for c in colonna[1:]:
                 if isinstance(c.value, date):
@@ -294,86 +339,69 @@ def scrivi_file(risultato: dict, uscita: Path, mese: str, amex: Optional[Path] =
                 elif isinstance(c.value, (float, Decimal)):
                     c.number_format = "#,##0.00"
 
-    # La pro-forma è una richiesta di pagamento: va nello scadenziario, NON nella registrazione contabile
-    # (in prova: Proseware pro-forma 519-2026, messa dall'amministrazione nello scadenzario).
+    def numero(valore):
+        return float(valore) if valore is not None else None
+
+    # La pro-forma è una richiesta di pagamento: NON va nella registrazione contabile
+    # (regola presa dai file dell'amministrazione).
     estere = sorted([f for f in risultato["fatture"] if f["estera"] and f.get("tipo_documento") != "proforma"],
                     key=lambda f: (f.get("fornitore") or "").lower())
     wb = Workbook()
     foglio(wb.active, ["Data Registrazione", "Fornitore", "Numero Fattura", "Data Fattura",
                        "Importo Valuta Originaria", "Importo EURO", "Note"],
            [[_data_it(f.get("data_registrazione")), f.get("fornitore"), f.get("numero"), _data_it(f.get("data_emissione")),
-             float(f["importo_valuta"]) if f["importo_valuta"] is not None else None,
-             float(f["importo_eur"]) if f["importo_eur"] is not None else None,
-             "; ".join(f["note"]) or None] for f in estere])
+             numero(f["importo_valuta"]), numero(f["importo_eur"]), "; ".join(f["note"]) or None] for f in estere])
     wb.active.title = "Registrazione Contabile"
+
+    # Per analisi (l'amministrazione lo vuole tenere): le fatture addebitate su carta, con il giorno dell'addebito.
+    con_carta = [f for f in risultato["fatture"] if f.get("movimento")]
+    foglio(wb.create_sheet("Pagate con carta"),
+           ["Fornitore", "Numero Fattura", "Data Fattura", "Importo Valuta Originaria", "Valuta", "Importo EURO",
+            "Carta", "Data addebito"],
+           [[f.get("fornitore"), f.get("numero"), _data_it(f.get("data_emissione")), numero(f["importo_valuta"]),
+             f.get("valuta"), numero(f["importo_eur"]), f["movimento"]["fonte"].upper(),
+             _data_it(f["movimento"]["data"])] for f in con_carta])
+
+    # Solo un controllo, lo scadenziario resta com'è: fatture da pagare che lì non ci sono.
+    mancanti = [f for f in risultato["fatture"] if not f.get("nello_scadenziario")]
+    foglio(wb.create_sheet("Non nello scadenziario"),
+           ["Fornitore", "Numero Fattura", "Data Fattura", "Importo Valuta Originaria", "Valuta", "Importo EURO",
+            "Scadenza calcolata", "Da dove"],
+           [[f.get("fornitore"), f.get("numero"), _data_it(f.get("data_emissione")), numero(f["importo_valuta"]),
+             f.get("valuta"), numero(f["importo_eur"]), _data_it(f.get("scadenza")), f.get("fonte_scadenza")]
+            for f in mancanti])
+    # Ratei e risconti: fatture con una parte di competenza in un altro anno (per le scritture di chiusura).
+    con_quote = [(f, q) for f in estere for q in f.get("competenza", [])]
+    if con_quote:
+        foglio(wb.create_sheet("Competenza altro anno"),
+               ["Fornitore", "Numero Fattura", "Data Fattura", "Importo EURO", "Tipo", "Anno di competenza",
+                "Dal", "Al", "Giorni", "Giorni del periodo", "Quota EURO"],
+               [[f.get("fornitore"), f.get("numero"), _data_it(f.get("data_emissione")), numero(f["importo_eur"]),
+                 q["tipo"], q["anno"], _data_it(q["dal"]), _data_it(q["al"]), q["giorni"], q["giorni_periodo"],
+                 numero(q["quota"])] for f, q in con_quote])
     creati.append(uscita / f"Registrazione contabile fatture estere {mese}.xlsx")
     wb.save(creati[-1])
 
-    tutte = sorted(risultato["fatture"], key=lambda f: (f.get("scadenza") or "9999", (f.get("fornitore") or "").lower()))
-    wb = Workbook()
-
-    def nota_scadenziario(f):
-        note = ["pro-forma: la fattura vera arriverà dopo"] if f.get("tipo_documento") == "proforma" else []
-        if f.get("movimento"):
-            m = f["movimento"]
-            note.append(f"pagata con carta {m['fonte'].upper()} il {date.fromisoformat(m['data']):%d/%m/%Y}")
-        if f["fonte_scadenza"] != "dalla fattura":
-            note.append(f["fonte_scadenza"])
-        return "; ".join(note) or None
-
-    def riga(f):
-        return [f.get("fornitore"), f.get("numero"), _data_it(f.get("data_emissione")),
-                (float(f["importo_valuta"]) if f.get("valuta") not in (None, "EUR") and f["importo_valuta"] is not None else None),
-                float(f["importo_eur"]) if f["importo_eur"] is not None else None,
-                termini.termine_di(f.get("fornitore") or ""), _data_it(f.get("scadenza")), nota_scadenziario(f)]
-
-    # Regola dell'amministrazione (call del 23/10): nello scadenziario vanno le fatture DA PAGARE (bonifico).
-    # Quelle già addebitate su carta si pagano da sole: stanno in un foglio a parte, per consultarle.
-    intestazione = ["Fornitore", "Numero Fattura", "Data Fattura", "Importo Valuta Originaria", "Importo EURO",
-                    "Termini di Pagamento", "Data di Scadenza", "Note"]
-    foglio(wb.active, intestazione, [riga(f) for f in tutte if not f.get("movimento")])
-    wb.active.title = "Scadenziario fatture"
-    foglio(wb.create_sheet("Pagate con carta"), intestazione, [riga(f) for f in tutte if f.get("movimento")])
-    creati.append(uscita / f"Scadenziario fatture {mese}.xlsx")
-    wb.save(creati[-1])
-
-    if amex:
-        # Copia dell'estratto Amex con le quattro colonne che l'amministrazione aggiungeva a mano.
-        originale = load_workbook(amex, data_only=True).worksheets[0]
-        righe = [list(r) for r in originale.iter_rows(values_only=True)]
-        intest = next(i for i, r in enumerate(righe) if r and r[0] == "Data")
-        col_f = righe[intest].index("Dettagli completi")
-        wb = Workbook()
-        ws = wb.active
-        ws.title = "Dettagli transazione"
-        for i, r in enumerate(righe):
-            if i < intest:
-                ws.append(r)
-            elif i == intest:
-                ws.append(r[:col_f + 1] + ["Importo valuta", "Valuta", "Cambio", "Importo EUR", "Commissioni"] + r[col_f + 1:])
-            else:
-                d = ec.leggi_dettagli_amex(r[col_f] or "") if r[col_f] else None
-                extra = [None] * 5
-                if d and d["importo_valuta"] and d["cambio"]:
-                    eur = (d["importo_valuta"] / d["cambio"]).quantize(CENT, ROUND_HALF_UP)
-                    extra = [float(d["importo_valuta"]), d["valuta"], float(d["cambio"]), float(eur),
-                             float(Decimal(str(r[4])) - eur) if r[4] is not None else None]
-                ws.append(r[:col_f + 1] + extra + r[col_f + 1:])
-        creati.append(uscita / f"Estratto Amex con controvalori {mese}.xlsx")
-        wb.save(creati[-1])
-
-    righe = [f"Elaborazione {mese}: {len(risultato['fatture'])} fatture ({len(estere)} estere), "
-             f"{len(risultato['saltati'])} file saltati.", "", "DA CONTROLLARE A MANO:"]
+    righe = [f"Elaborazione {mese}: {len(risultato['fatture'])} fatture ({len(estere)} da registrare), "
+             f"{len(risultato['saltati'])} file saltati.",
+             f"Data di registrazione: {_data_it(termini.data_registrazione(mese)):%d/%m/%Y}." if risultato.get("mese") else "",
+             "", "DA CONTROLLARE A MANO:"]
     for f in risultato["fatture"]:
         problemi = []
         if f["estera"] and f["importo_eur"] is None:
             problemi.append("controvalore in euro mancante")
-        if not f.get("scadenza") and not f.get("movimento"):
-            problemi.append("scadenza mancante (termini da definire, o pagata con una carta senza estratto conto)")
         if not f.get("numero") or not f.get("data_emissione"):
             problemi.append("numero o data mancanti")
+        if any("partita IVA" in n and "nostra" in n for n in f["note"]):
+            problemi.append("manca la nostra partita IVA")
         if problemi:
             righe.append(f"- {f['percorso']}: {', '.join(problemi)}")
+    righe += ["", "NON NELLO SCADENZIARIO E NON PAGATE CON CARTA (controllare se sono sfuggite):"] + [
+        f"- {f.get('fornitore')} n. {f.get('numero')} del {_data_it(f.get('data_emissione')) or '?'}"
+        for f in mancanti] + (["- nessuna"] if not mancanti else [])
+    if con_quote:
+        righe += ["", "COMPETENZA IN UN ALTRO ANNO (ratei e risconti):"] + [
+            f"- {f.get('fornitore')} n. {f.get('numero')}: {termini.nota_competenza(q)}" for f, q in con_quote]
     righe += ["", "FILE SALTATI:"] + [f"- {p.name}: {motivo}" for p, motivo in risultato["saltati"]]
     righe += ["", "CONTROVALORI DELLE FATTURE ESTERE:"] + [
         f"- {f.get('fornitore')} n. {f.get('numero')}: {f.get('importo_valuta')} {f.get('valuta')} -> "
@@ -384,15 +412,16 @@ def scrivi_file(risultato: dict, uscita: Path, mese: str, amex: Optional[Path] =
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Elabora le fatture di un mese.")
-    parser.add_argument("cartella", type=Path)
+    parser = argparse.ArgumentParser(description="Elabora il blocco mensile delle fatture estere.")
+    parser.add_argument("cartella", type=Path, help="cartella del mese, es. '.../10 Ottobre'")
     parser.add_argument("--amex", type=Path)
     parser.add_argument("--unicredit", type=Path)
-    parser.add_argument("--uscita", type=Path, default=config.RIEPILOGHI)
-    parser.add_argument("--mese", default=date.today().strftime("%m-%Y"))
+    parser.add_argument("--uscita", type=Path, help="dove scrivere i file (di solito la cartella del mese)")
+    parser.add_argument("--mese", help="MM-AAAA del blocco (di solito si ricava dal nome della cartella)")
     a = parser.parse_args()
-    risultato = elabora(a.cartella, a.amex, a.unicredit)
-    for p in scrivi_file(risultato, a.uscita, a.mese, a.amex):
+    risultato = elabora(a.cartella, a.amex, a.unicredit, a.mese)
+    mese = risultato["mese"] or date.today().strftime("%m-%Y")
+    for p in scrivi_file(risultato, a.uscita or a.cartella, mese):
         print("creato:", p)
 
 
