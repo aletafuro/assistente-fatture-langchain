@@ -10,7 +10,8 @@
 
 # --- base: Python e un utente senza privilegi -----------------------------------
 FROM python:3.13-slim-bookworm AS base
-RUN useradd --create-home --home-dir /app app
+# uid fisso (1000): sul server le cartelle montate da fuori si danno a questo utente
+RUN useradd --uid 1000 --create-home --home-dir /app app
 WORKDIR /app
 ENV PYTHONUNBUFFERED=1 \
     PYTHONIOENCODING=utf-8 \

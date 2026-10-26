@@ -22,6 +22,7 @@ i messaggi a una sola copia). Fermare la v1 prima di avviare la v2, e viceversa.
 import asyncio
 from datetime import time as dt_time
 from pathlib import Path
+from typing import Optional
 from zoneinfo import ZoneInfo
 
 import percorsi_v2  # noqa: F401
@@ -215,9 +216,32 @@ async def comando_scadenze(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         f"{r['Importo EURO'] or '?'} €" + (f" ({r['Rata']})" if r["Rata"] else "") for r in righe))
 
 
+def testo_per_il_bot(update: Update, nome_bot: str, id_bot: int) -> Optional[str]:
+    """
+    In chat privata ogni messaggio è per il bot. Nel GRUPPO no: le persone si scrivono anche tra loro.
+    Il bot risponde se lo si nomina (@nome), se si risponde a un suo messaggio, o se c'è una sua domanda
+    (o la raccolta del mese) in corso. Altrimenti None: il messaggio si ignora.
+    """
+    testo = update.message.text or ""
+    if not v1.in_gruppo(update):
+        return testo
+    chat = str(update.effective_chat.id)
+    menzione = f"@{nome_bot}".lower() if nome_bot else None
+    if menzione and menzione in testo.lower():
+        inizio = testo.lower().index(menzione)
+        return (testo[:inizio] + testo[inizio + len(menzione):]).strip()
+    risposta_a = update.message.reply_to_message
+    if risposta_a and risposta_a.from_user and risposta_a.from_user.id == id_bot:
+        return testo
+    if raccolta_mese.aperta(chat) or grafo_bozze.bozza_aperta(chat):
+        return testo
+    return None
+
+
 async def messaggio_testo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    if await v1.autorizzato(update):
-        await smista_testo(update, update.message.text)
+    testo = testo_per_il_bot(update, context.bot.username, context.bot.id)
+    if testo and await v1.autorizzato(update):
+        await smista_testo(update, testo)
 
 
 async def messaggio_foto(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:

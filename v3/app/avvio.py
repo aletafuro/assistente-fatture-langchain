@@ -12,7 +12,11 @@ import sys
 OBBLIGATORIE = {
     "OPENAI_API_KEY": "la chiave OpenAI (lettura delle fatture)",
     "TELEGRAM_BOT_TOKEN": "il token del bot Telegram (da BotFather)",
-    "TELEGRAM_UTENTI_AUTORIZZATI": "gli id Telegram di chi può usare il bot",
+}
+# Almeno una delle due: utenti singoli (chat privata) o gruppi (chi è nel gruppo usa il bot).
+AUTORIZZAZIONE = {
+    "TELEGRAM_UTENTI_AUTORIZZATI": "gli id Telegram di chi può usare il bot in chat privata",
+    "TELEGRAM_GRUPPI_AUTORIZZATI": "gli id dei gruppi Telegram in cui lavora il bot",
 }
 CONSIGLIATE = {
     "AZIENDA_NOME": "il nome della propria azienda (il cliente delle fatture)",
@@ -22,6 +26,8 @@ CONSIGLIATE = {
 
 def controlla() -> bool:
     mancanti = [f"  - {nome}: {cosa}" for nome, cosa in OBBLIGATORIE.items() if not os.getenv(nome)]
+    if not any(os.getenv(nome) for nome in AUTORIZZAZIONE):
+        mancanti.append("  - " + " oppure ".join(f"{nome} ({cosa})" for nome, cosa in AUTORIZZAZIONE.items()))
     for nome, cosa in CONSIGLIATE.items():
         if not os.getenv(nome):
             print(f"Attenzione: manca {nome} ({cosa}). Il bot funziona, ma legge meglio con questa informazione.")

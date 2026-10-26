@@ -41,6 +41,8 @@ import config
 
 TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 UTENTI_AUTORIZZATI = {u.strip() for u in os.getenv("TELEGRAM_UTENTI_AUTORIZZATI", "").split(",") if u.strip()}
+# Gruppi in cui il bot lavora (id negativi, es. -1001234567890): chi è nel gruppo lo usa, chi esce no.
+GRUPPI_AUTORIZZATI = {g.strip() for g in os.getenv("TELEGRAM_GRUPPI_AUTORIZZATI", "").split(",") if g.strip()}
 
 CARTELLA_RICEVUTI = config.RICEVUTI
 
@@ -64,7 +66,22 @@ log = logging.getLogger("bot")
 # Un bot Telegram è raggiungibile da CHIUNQUE conosca il suo nome.
 # Le fatture sono dati aziendali: rispondiamo solo agli utenti autorizzati nel .env.
 
+def in_gruppo(update: Update) -> bool:
+    return update.effective_chat.type in ("group", "supergroup")
+
+
 async def autorizzato(update: Update) -> bool:
+    if in_gruppo(update):
+        id_gruppo = str(update.effective_chat.id)
+        if id_gruppo in GRUPPI_AUTORIZZATI:
+            return True
+        log.warning("Messaggio da gruppo NON autorizzato: %s", id_gruppo)
+        # In un gruppo si risponde solo ai comandi: niente risposte a ogni messaggio della conversazione.
+        if (update.message and (update.message.text or "").startswith("/")):
+            await update.message.reply_text(
+                f"Questo gruppo non è autorizzato a usare l'assistente.\nL'id del gruppo è {id_gruppo}: "
+                f"se sei il proprietario, aggiungilo nel file .env alla riga TELEGRAM_GRUPPI_AUTORIZZATI e riavvia il bot.")
+        return False
     id_utente = str(update.effective_user.id)
     if id_utente in UTENTI_AUTORIZZATI:
         return True

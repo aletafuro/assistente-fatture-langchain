@@ -102,3 +102,17 @@ def test_numero_e_data_dall_immagine_se_il_testo_non_basta(monkeypatch, tmp_path
     assert (dati["numero"], dati["data_emissione"]) == ("NC-77", "2026-09-12")
     assert dati["_grezzo_foto"] == {"numero": "NC-77"} and letture == [".png"]
     assert dati["note_lettura"][0] == "letti dall'immagine della pagina: numero, data emissione"
+
+
+def test_nel_gruppo_il_bot_risponde_solo_quando_e_chiamato():
+    from types import SimpleNamespace as N
+    import bot_telegram_v2 as bot
+
+    def messaggio(testo, tipo="supergroup", risposta_a=None, chat=-100777):
+        return N(effective_chat=N(type=tipo, id=chat),
+                 message=N(text=testo, reply_to_message=risposta_a))
+    assert bot.testo_per_il_bot(messaggio("ciao, hai visto la mail?"), "fatture_bot", 42) is None
+    assert bot.testo_per_il_bot(messaggio("@fatture_bot quanto ho speso a settembre?"), "fatture_bot", 42) == \
+        "quanto ho speso a settembre?"
+    assert bot.testo_per_il_bot(messaggio("sì", risposta_a=N(from_user=N(id=42))), "fatture_bot", 42) == "sì"
+    assert bot.testo_per_il_bot(messaggio("ciao", tipo="private"), "fatture_bot", 42) == "ciao"
