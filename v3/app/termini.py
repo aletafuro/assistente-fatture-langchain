@@ -17,11 +17,7 @@ quello che lei aggiorna vale subito. I termini detti in chat vengono scritti anc
 Rate e casi speciali (dati/regole_scadenze.json), es. un fornitore che manda due fatture al mese: se la
 fattura parla di "chat", 60% a 7 gg DF e 40% a 30 gg FM; se parla di "mail", tutta a 7 gg DF.
 
-Competenza a cavallo d'anno (per le scritture di chiusura): il periodo lo legge il modello dalla descrizione,
-la quota la calcola Python in proporzione ai giorni.
-   - RATEO:    fattura del 2027 con periodo (in parte) nel 2026 -> quota 2026 da registrare a fatture da ricevere
-               (es. fattura di gennaio "dal 15/12/2026 al 15/01/2027": 17 giorni su 32 sono del 2026);
-   - RISCONTO: fattura del 2026 con periodo (in parte) nel 2027 -> quota 2027 da rinviare all'anno dopo.
+Ratei e risconti: in ratei_risconti.py (calcolo a una data di chiusura, a parte dalla registrazione).
 """
 
 import calendar
@@ -260,39 +256,3 @@ def piano_di_pagamento(data_fattura: str, totale_cent: int, rate: list) -> list:
                       "descrizione": f"rata {i + 1}/{len(rate)}: {rata['percentuale']}% a {rata['termine']}"})
     return piano
 
-
-# ---------------------------------------------------------------------------
-# COMPETENZA A CAVALLO D'ANNO (ratei e risconti)
-# ---------------------------------------------------------------------------
-def quote_fuori_anno(data_fattura: Optional[str], inizio: Optional[str], fine: Optional[str], importo) -> list:
-    """
-    Parti del periodo che cadono in un anno diverso da quello della fattura, con la quota proporzionale ai giorni
-    (estremi compresi). [] se il periodo non c'è o è tutto nell'anno della fattura.
-    """
-    from decimal import ROUND_HALF_UP, Decimal
-    if not data_fattura or not (inizio or fine):
-        return []
-    inizio, fine = date.fromisoformat(inizio or fine), date.fromisoformat(fine or inizio)
-    if fine < inizio:
-        inizio, fine = fine, inizio
-    anno = int(data_fattura[:4])
-    giorni = (fine - inizio).days + 1
-    quote = []
-    for tipo, da, a, anno_quota in (("rateo", inizio, min(fine, date(anno - 1, 12, 31)), anno - 1),
-                                    ("risconto", max(inizio, date(anno + 1, 1, 1)), fine, anno + 1)):
-        if a < da:
-            continue
-        n = (a - da).days + 1
-        quota = None if importo is None else \
-            (Decimal(str(importo)) * n / giorni).quantize(Decimal("0.01"), ROUND_HALF_UP)
-        quote.append({"tipo": tipo, "anno": anno_quota, "dal": da.isoformat(), "al": a.isoformat(), "giorni": n,
-                      "giorni_periodo": giorni, "quota": quota})
-    return quote
-
-
-def nota_competenza(q: dict) -> str:
-    """'rateo: 1.234,56 € di competenza 2026 (17/32 giorni, dal 15/12/2026 al 31/12/2026)'."""
-    importo = "importo da calcolare" if q["quota"] is None else \
-        f"{q['quota']:,.2f} €".replace(",", "X").replace(".", ",").replace("X", ".")
-    return (f"{q['tipo']}: {importo} di competenza {q['anno']} ({q['giorni']}/{q['giorni_periodo']} giorni, "
-            f"dal {date.fromisoformat(q['dal']):%d/%m/%Y} al {date.fromisoformat(q['al']):%d/%m/%Y})")

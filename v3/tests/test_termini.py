@@ -103,20 +103,3 @@ def test_manca_la_nostra_partita_iva():
     assert piva_cliente_presente("Bill to Studio Prova, Milano") is False
     assert piva_cliente_presente(None) is None                                         # foto: non si sa
 
-
-def test_rateo_fattura_di_gennaio_con_competenza_dicembre():
-    # Esempio dell'amministrazione: fattura di gennaio 2027 "dal 15/12/2026 al 15/01/2027".
-    [q] = termini.quote_fuori_anno("2027-01-20", "2026-12-15", "2027-01-15", "320.00")
-    assert (q["tipo"], q["anno"], q["giorni"], q["giorni_periodo"], str(q["quota"])) == ("rateo", 2026, 17, 32, "170.00")
-    assert termini.nota_competenza(q) == \
-        "rateo: 170,00 € di competenza 2026 (17/32 giorni, dal 15/12/2026 al 31/12/2026)"
-    # Fattura di febbraio "competenza dicembre 2026": tutta dell'anno prima.
-    [q] = termini.quote_fuori_anno("2027-02-05", "2026-12-01", "2026-12-31", "1000")
-    assert q["giorni"] == q["giorni_periodo"] == 31 and str(q["quota"]) == "1000.00"
-
-
-def test_risconto_e_periodo_tutto_nell_anno():
-    [q] = termini.quote_fuori_anno("2026-12-10", "2026-12-10", "2027-01-09", "310")
-    assert (q["tipo"], q["anno"], q["giorni"], str(q["quota"])) == ("risconto", 2027, 9, "90.00")
-    assert termini.quote_fuori_anno("2026-09-30", "2026-09-01", "2026-09-30", "100") == []
-    assert termini.quote_fuori_anno("2026-09-30", None, None, "100") == []

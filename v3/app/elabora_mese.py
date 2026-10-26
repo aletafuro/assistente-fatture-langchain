@@ -15,6 +15,7 @@ mese dopo), con gli estratti conto delle carte. Questo modulo:
      la nostra partita IVA sulla fattura;
   6. scrive NELLA CARTELLA DEL MESE, nel layout dell'amministrazione:
        - Registrazione contabile (fogli: registrazione, pagate con carta, non nello scadenziario)
+         (ratei e risconti si calcolano a parte, a una data di chiusura: ratei_risconti.py)
        - un riepilogo di cosa va controllato a mano.
 
 Lo scadenziario NON si tocca (regola del 26/10): si alimenta solo con le fatture mandate per lo scadenziario.
@@ -288,10 +289,6 @@ def elabora(cartella: Path, amex: Optional[Path] = None, unicredit: Optional[Pat
         f["note"] = list(f.get("note_lettura", []))
         if piva_cliente_presente(f.get("testo")) is False:
             f["note"].append("manca la nostra partita IVA sulla fattura: chiedere al fornitore di correggerla")
-        # Competenza in un altro anno (ratei e risconti per la chiusura): quota proporzionale ai giorni.
-        f["competenza"] = termini.quote_fuori_anno(f.get("data_emissione"), f.get("inizio_periodo"),
-                                                   f.get("fine_periodo"), f["importo_eur"])
-        f["note"] += [termini.nota_competenza(q) for q in f["competenza"]]
         # Solo un controllo: lo scadenziario non si modifica dal blocco.
         f["nello_scadenziario"] = bool(f.get("movimento")) or f.get("tipo_documento") == "nota_di_credito" or \
             scadenziario.contiene(f.get("fornitore"), f.get("numero"))
@@ -305,6 +302,9 @@ def elabora(cartella: Path, amex: Optional[Path] = None, unicredit: Optional[Pat
                 f["note"].append(f"anagrafica non aggiornata ({errore})")
         fatture.append(f)
 
+    if mese:                                # per ratei e risconti, calcolati a parte (ratei_risconti.py)
+        import ratei_risconti
+        ratei_risconti.salva_blocco(mese, [f for f in fatture if f["estera"] and f.get("tipo_documento") != "proforma"])
     return {"fatture": fatture, "saltati": saltati, "movimenti": movimenti, "mese": mese}
 
 
@@ -370,15 +370,6 @@ def scrivi_file(risultato: dict, uscita: Path, mese: str) -> list:
            [[f.get("fornitore"), f.get("numero"), _data_it(f.get("data_emissione")), numero(f["importo_valuta"]),
              f.get("valuta"), numero(f["importo_eur"]), _data_it(f.get("scadenza")), f.get("fonte_scadenza")]
             for f in mancanti])
-    # Ratei e risconti: fatture con una parte di competenza in un altro anno (per le scritture di chiusura).
-    con_quote = [(f, q) for f in estere for q in f.get("competenza", [])]
-    if con_quote:
-        foglio(wb.create_sheet("Competenza altro anno"),
-               ["Fornitore", "Numero Fattura", "Data Fattura", "Importo EURO", "Tipo", "Anno di competenza",
-                "Dal", "Al", "Giorni", "Giorni del periodo", "Quota EURO"],
-               [[f.get("fornitore"), f.get("numero"), _data_it(f.get("data_emissione")), numero(f["importo_eur"]),
-                 q["tipo"], q["anno"], _data_it(q["dal"]), _data_it(q["al"]), q["giorni"], q["giorni_periodo"],
-                 numero(q["quota"])] for f, q in con_quote])
     creati.append(uscita / f"Registrazione contabile fatture estere {mese}.xlsx")
     wb.save(creati[-1])
 
@@ -399,9 +390,6 @@ def scrivi_file(risultato: dict, uscita: Path, mese: str) -> list:
     righe += ["", "NON NELLO SCADENZIARIO E NON PAGATE CON CARTA (controllare se sono sfuggite):"] + [
         f"- {f.get('fornitore')} n. {f.get('numero')} del {_data_it(f.get('data_emissione')) or '?'}"
         for f in mancanti] + (["- nessuna"] if not mancanti else [])
-    if con_quote:
-        righe += ["", "COMPETENZA IN UN ALTRO ANNO (ratei e risconti):"] + [
-            f"- {f.get('fornitore')} n. {f.get('numero')}: {termini.nota_competenza(q)}" for f, q in con_quote]
     righe += ["", "FILE SALTATI:"] + [f"- {p.name}: {motivo}" for p, motivo in risultato["saltati"]]
     righe += ["", "CONTROVALORI DELLE FATTURE ESTERE:"] + [
         f"- {f.get('fornitore')} n. {f.get('numero')}: {f.get('importo_valuta')} {f.get('valuta')} -> "

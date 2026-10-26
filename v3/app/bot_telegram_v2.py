@@ -149,7 +149,8 @@ async def comando_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
              "Ogni fattura confermata va nello scadenziario (se è attivo); /scadenze mostra cosa pagare a breve, "
              "/saldata Fornitore numero la segna come pagata.\n"
              "Per la registrazione del mese: /registra ottobre elabora la cartella condivisa del mese "
-             "(oppure /mese per mandarmi le fatture qui in chat).")
+             "(oppure /mese per mandarmi le fatture qui in chat).\n"
+             "Ratei e risconti a una data: /ratei 31/12/2026 (senza data: l'ultima fine trimestre).")
     domanda = grafo_bozze.domanda_in_sospeso(str(update.effective_chat.id))
     if domanda:
         testo += f"\n\nHai una fattura in sospeso. La mia ultima domanda era:\n{domanda}"
@@ -184,6 +185,27 @@ async def comando_registra(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         avvisi.errore_tecnico("Registrazione del mese", errore)
         messaggio = "Scusa, l'elaborazione non è riuscita: riprova tra poco."
     await invia(update, messaggio)
+
+
+async def comando_ratei(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """/ratei 31/12/2026: ratei e risconti alla data (senza data: l'ultima fine trimestre), Excel in cartella e in chat."""
+    if not await v1.autorizzato(update):
+        return
+    import config
+    import ratei_risconti
+    from datetime import datetime
+    try:
+        chiusura = datetime.strptime(context.args[0], "%d/%m/%Y").date().isoformat() if context.args \
+            else ratei_risconti.chiusura_predefinita()
+    except ValueError:
+        await invia(update, "Scrivi la data così: \"/ratei 31/12/2026\" (o solo \"/ratei\" per l'ultima fine trimestre).")
+        return
+    risultato = await asyncio.to_thread(ratei_risconti.calcola, chiusura)
+    percorso = await asyncio.to_thread(ratei_risconti.scrivi_excel, risultato,
+                                       config.CARTELLA_REGISTRAZIONE / "Ratei e risconti")
+    await invia(update, ratei_risconti.messaggio(risultato) + f"\nIl file è anche nella cartella \"Ratei e risconti\".")
+    with open(percorso, "rb") as f:
+        await update.message.reply_document(f, filename=percorso.name)
 
 
 async def comando_saldata(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -330,6 +352,7 @@ def main() -> None:
     app.add_handler(CommandHandler("mese", comando_mese))
     app.add_handler(CommandHandler("registra", comando_registra))
     app.add_handler(CommandHandler("saldata", comando_saldata))
+    app.add_handler(CommandHandler("ratei", comando_ratei))
     app.add_handler(CommandHandler("scadenze", comando_scadenze))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, messaggio_testo))
     app.add_handler(MessageHandler(filters.PHOTO, messaggio_foto))
