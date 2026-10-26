@@ -9,6 +9,8 @@ e si ferma subito ("fail fast"), invece di cadere più avanti con un errore tecn
 import os
 import sys
 
+import config  # noqa: F401  (carica il file .env: fuori dal container le impostazioni sono lì)
+
 OBBLIGATORIE = {
     "OPENAI_API_KEY": "la chiave OpenAI (lettura delle fatture)",
     "TELEGRAM_BOT_TOKEN": "il token del bot Telegram (da BotFather)",
