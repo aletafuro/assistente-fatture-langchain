@@ -173,7 +173,7 @@ def registra_fattura(dati: dict) -> dict:
         avvisi.append(f"Importi incoerenti: {centesimi_in_euro(imp)} + {centesimi_in_euro(iva)} "
                       f"non fa {centesimi_in_euro(tot)}.")
     regime = dati.get("regime_iva") or "ordinario"
-    if regime != "ordinario":
+    if regime != "ordinario" and config.AVVISO_REGIME_IVA:
         avvisi.append(f"Regime IVA non ordinario ({regime.replace('_', ' ')}): da verificare con il commercialista.")
 
     nuova = {

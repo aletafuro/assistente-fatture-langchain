@@ -45,6 +45,8 @@ FILE_TERMINI = CARTELLA_SCADENZIARIO / os.getenv("NOME_FILE_TERMINI", "Termini D
 SCADENZIARIO_ANNUALE = os.getenv("SCADENZIARIO_ANNUALE", "").lower() in ("1", "si", "sì", "true")
 # Originali delle fatture su Google Drive (0 = no, es. quando sono già in una cartella condivisa dell'azienda).
 ARCHIVIA_SU_DRIVE = os.getenv("ARCHIVIA_SU_DRIVE", "1").lower() not in ("0", "no", "false")
+# Avviso "regime IVA non ordinario, da verificare" (0 = spento, es. se la contabilità IVA si fa con altri sistemi).
+AVVISO_REGIME_IVA = os.getenv("AVVISO_REGIME_IVA", "1").lower() not in ("0", "no", "false")
 
 # La nostra azienda: compare in ogni fattura come CLIENTE, mai come fornitore.
 # Si imposta nel .env (non nel codice): lo stesso programma serve aziende diverse.

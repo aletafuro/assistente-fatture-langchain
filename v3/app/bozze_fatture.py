@@ -121,7 +121,7 @@ def _aggiorna_controlli(b: dict) -> None:
             avvisi += anagrafica_esteri.avvisi_bozza(d)
         except Exception as errore:            # la verifica non deve mai bloccare la registrazione
             avvisi.append(f"Verifica della partita IVA non riuscita ({errore}).")
-    if d.get("regime_iva") not in (None, "ordinario"):
+    if d.get("regime_iva") not in (None, "ordinario") and config.AVVISO_REGIME_IVA:
         avvisi.append(f"Regime IVA non ordinario ({d['regime_iva'].replace('_', ' ')}): da verificare.")
     doppione = reg.cerca_duplicato(reg.carica_registro(), d.get("partita_iva"), d.get("fornitore"), d.get("numero"))
     if doppione:
