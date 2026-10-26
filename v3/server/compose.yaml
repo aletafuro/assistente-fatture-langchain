@@ -1,0 +1,28 @@
+# Assistente fatture sul server.  Avvio:  docker compose up -d --build     Log:  docker compose logs -f
+#
+# Struttura sul server (vedi INSTALLAZIONE.md):
+#   /opt/bot-fatture/codice/            il progetto preso da GitLab (questo file è in codice/server/)
+#   /opt/bot-fatture/.env               impostazioni e segreti (NON nel GitLab), modello: env.esempio
+#   /opt/bot-fatture/dati/              registro, letture salvate, anagrafica, cambi, regole_scadenze.json
+#   /mnt/owncloud/                      le cartelle condivise di ownCloud, montate via WebDAV (rclone)
+services:
+  bot:
+    build:
+      context: ..                       # il codice della v3 (cartella sopra a server/)
+      target: produzione
+    image: assistente-fatture:${VERSIONE:-locale}
+    env_file: /opt/bot-fatture/.env
+    environment:
+      CARTELLA_DATI: /dati
+      CARTELLA_REGISTRAZIONE: /condivise/registrazione
+      CARTELLA_SCADENZIARIO: /condivise/scadenziario
+      SCADENZIARIO_ANNUALE: "1"
+    volumes:
+      - /opt/bot-fatture/dati:/dati
+      - /opt/bot-fatture/segreti:/app/segreti
+      - "/mnt/owncloud/Registrazione Contabile Fatture Estere:/condivise/registrazione"
+      - "/mnt/owncloud/Scadenziario Fatture:/condivise/scadenziario"
+    restart: unless-stopped             # riparte da solo se cade o se il server si riavvia
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "5" }   # i log non riempiono il disco

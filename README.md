@@ -2,9 +2,19 @@
 
 Assistente **agentico** su Telegram per le fatture fornitori di una piccola impresa: riceve le fatture come **foto, PDF, messaggi vocali o testo**, ne estrae i dati con l'aiuto dell'utente, le archivia su **Google Drive**, le registra, le controlla e invia i riepiloghi al **commercialista**.
 
-Realizzato con **LangChain** e **LangGraph** in Python, in due versioni.
+Realizzato con **LangChain** e **LangGraph** in Python, in tre versioni.
 
-## Versioni
+## Novità: la v3 (`v3/`)
+
+La v3 porta l'assistente in un **ufficio amministrativo vero**, dove è in uso in un gruppo Telegram:
+**fatture estere** con controvalore in euro (estratti conto delle carte o cambio Banca d'Italia del giorno),
+verifica delle partite IVA sul VIES, **registrazione contabile** a blocchi mensili, **scadenziario** annuale,
+**ratei e risconti** a qualsiasi data. E soprattutto il lavoro di **MLOps**: 164 test senza LLM, `uv` con lock file,
+**Docker** multi-stadio con i test dentro, **GitHub Actions**, esperimenti **MLflow** per scegliere il modello,
+**DSPy** per l'interprete delle risposte (dall'88,9% al 98,6%), aggiornamento sul server solo se i test passano.
+Tutto in [`v3/README.md`](v3/README.md).
+
+## Versioni 1 e 2
 
 | | **v1** — `codice/` | **v2** — `codice_v2/` |
 |---|---|---|

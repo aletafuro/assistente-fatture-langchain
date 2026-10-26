@@ -1,0 +1,20 @@
+# Monta le cartelle di ownCloud in /mnt/owncloud (WebDAV), all'avvio del server.
+# Installazione: vedi INSTALLAZIONE.md, passo 3.  File: /etc/systemd/system/rclone-owncloud.service
+[Unit]
+Description=ownCloud (WebDAV) per il bot fatture
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=notify
+# uid/gid 1000 = l'utente del container del bot: così può leggere e scrivere i file
+ExecStart=/usr/bin/rclone mount owncloud: /mnt/owncloud \
+    --config /etc/rclone/rclone.conf \
+    --uid 1000 --gid 1000 --umask 002 --allow-other \
+    --vfs-cache-mode writes --dir-cache-time 1m --poll-interval 1m
+ExecStop=/bin/fusermount3 -u /mnt/owncloud
+Restart=on-failure
+RestartSec=30
+
+[Install]
+WantedBy=multi-user.target
