@@ -54,6 +54,10 @@ def test_calcolo_dai_blocchi_salvati(tmp_path):
     assert risultato["blocchi"] == ["2026-12", "2027-01"]
     percorso = rr.scrivi_excel(risultato, tmp_path / "uscita")
     assert percorso.name == "Ratei e risconti al 31-12-2026.xlsx"
+    from openpyxl import load_workbook
+    righe = list(load_workbook(percorso).active.iter_rows(values_only=True))
+    assert righe[0][-1] == "Differenza EURO" and righe[1][-1] == 144.52          # 320,00 - 175,48
+    assert righe[4][0] == "Totale ratei" and righe[4][12] == 175.48 and righe[5][12] == 90.0
     assert "1 ratei e 1 risconti" in rr.messaggio(risultato)
 
 

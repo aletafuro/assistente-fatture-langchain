@@ -30,7 +30,7 @@ import config
 
 BLOCCHI = config.DATI / "blocchi"
 CAMPI = ("fornitore", "numero", "data_emissione", "inizio_periodo", "fine_periodo", "importo_eur", "valuta",
-         "importo_valuta", "tipo_documento", "percorso")
+         "importo_valuta", "tipo_documento", "percorso", "estera")
 
 
 # ---------------------------------------------------------------------------
@@ -110,18 +110,32 @@ def scrivi_excel(risultato: dict, cartella: Path) -> Path:
     wb = Workbook()
     ws = wb.active
     ws.title = f"Al {d:%d-%m-%Y}"
-    ws.append(["Tipo", "Fornitore", "Numero Fattura", "Data Fattura", "Inizio periodo", "Fine periodo",
-               "Importo EURO", "Dal", "Al", "Giorni", "Giorni del periodo", "Quota EURO"])
+    # Differenza = importo - quota: la parte della fattura che resta nella competenza del periodo (come la
+    # calcolava l'amministrazione a mano). Es. risconto di un abbonamento mensile 65,54 - 56,80 = 8,74 di costo di settembre.
+    ws.append(["Tipo", "Fornitore", "Fattura", "Numero Fattura", "Data Fattura", "Inizio periodo", "Fine periodo",
+               "Importo EURO", "Dal", "Al", "Giorni", "Giorni del periodo", "Quota EURO", "Differenza EURO"])
     for c in ws[1]:
         c.font = Font(bold=True)
     giorno = lambda iso: date.fromisoformat(iso) if iso else None                      # noqa: E731
+    numero = lambda v: float(v) if v is not None else None                             # noqa: E731
     for r in risultato["righe"]:
-        ws.append([r["tipo"], r.get("fornitore"), r.get("numero"), giorno(r.get("data_emissione")),
-                   giorno(r.get("inizio_periodo")), giorno(r.get("fine_periodo")),
-                   float(r["importo_eur"]) if r.get("importo_eur") is not None else None,
-                   giorno(r["dal"]), giorno(r["al"]), r["giorni"], r["giorni_periodo"],
-                   float(r["quota"]) if r["quota"] is not None else None])
-    for colonna, larghezza in zip("ABCDEFGHIJKL", (10, 32, 20, 12, 12, 12, 13, 12, 12, 8, 10, 12)):
+        importo, quota = numero(r.get("importo_eur")), numero(r["quota"])
+        ws.append([r["tipo"], r.get("fornitore"), "italiana" if r.get("estera") is False else "estera",
+                   r.get("numero"), giorno(r.get("data_emissione")),
+                   giorno(r.get("inizio_periodo")), giorno(r.get("fine_periodo")), importo,
+                   giorno(r["dal"]), giorno(r["al"]), r["giorni"], r["giorni_periodo"], quota,
+                   round(importo - quota, 2) if None not in (importo, quota) else None])
+    totali = {t: [sum(numero(r[c] if c == "quota" else r.get(c)) or 0 for r in risultato["righe"] if r["tipo"] == t)
+                  for c in ("importo_eur", "quota")] for t in ("rateo", "risconto")}
+    ws.append([])
+    for t, etichetta in (("rateo", "Totale ratei"), ("risconto", "Totale risconti")):
+        imp, quo = totali[t]
+        riga = ws.max_row + 1
+        ws.append([etichetta] + [None] * 6 + [round(imp, 2)] + [None] * 4 + [round(quo, 2), round(imp - quo, 2)])
+        for c in ws[riga]:
+            c.font = Font(bold=True)
+    ws.append([f"Calcolati con i blocchi: {', '.join(risultato['blocchi']) or 'nessuno'}"])
+    for colonna, larghezza in zip("ABCDEFGHIJKLMN", (15, 32, 9, 20, 12, 12, 12, 13, 12, 12, 8, 10, 12, 14)):
         ws.column_dimensions[colonna].width = larghezza
     for riga in ws.iter_rows(min_row=2):
         for c in riga:
@@ -129,11 +143,6 @@ def scrivi_excel(risultato: dict, cartella: Path) -> Path:
                 c.number_format = "DD/MM/YYYY"
             elif isinstance(c.value, float):
                 c.number_format = "#,##0.00"
-    totali = {t: sum(float(r["quota"] or 0) for r in risultato["righe"] if r["tipo"] == t) for t in ("rateo", "risconto")}
-    ws.append([])
-    ws.append(["Totale ratei", None, None, None, None, None, None, None, None, None, None, totali["rateo"]])
-    ws.append(["Totale risconti", None, None, None, None, None, None, None, None, None, None, totali["risconto"]])
-    ws.append([f"Calcolati con i blocchi: {', '.join(risultato['blocchi']) or 'nessuno'}"])
     percorso = cartella / f"Ratei e risconti al {d:%d-%m-%Y}.xlsx"
     wb.save(percorso)
     return percorso

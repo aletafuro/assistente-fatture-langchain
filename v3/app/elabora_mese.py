@@ -303,8 +303,9 @@ def elabora(cartella: Path, amex: Optional[Path] = None, unicredit: Optional[Pat
         fatture.append(f)
 
     if mese:                                # per ratei e risconti, calcolati a parte (ratei_risconti.py)
+        # Anche le italiane (regola del 26/10): non vanno nella registrazione, ma contano per ratei e risconti.
         import ratei_risconti
-        ratei_risconti.salva_blocco(mese, [f for f in fatture if f["estera"] and f.get("tipo_documento") != "proforma"])
+        ratei_risconti.salva_blocco(mese, [f for f in fatture if f.get("tipo_documento") != "proforma"])
     return {"fatture": fatture, "saltati": saltati, "movimenti": movimenti, "mese": mese}
 
 
