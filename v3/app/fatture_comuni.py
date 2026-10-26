@@ -38,7 +38,9 @@ ISTRUZIONI_ESTRAZIONE = (
     f"{_CLIENTE}"
     "Nelle fatture in inglese il fornitore è chi emette la 'Invoice'; il cliente è in 'Bill to', 'Customer', "
     "'Sold to'. La partita IVA del fornitore può essere in alto, nell'intestazione, ma spesso è nel PIÈ DI "
-    "PAGINA ('VAT REG', 'VAT number', 'Tax ID', 'USt-IdNr', 'TVA'): cercala in tutto il documento, fino in fondo. "
+    "PAGINA ('VAT REG', 'VAT number', 'Tax ID', 'TIN', 'Tin Number', 'USt-IdNr', 'TVA'): cercala in tutto il "
+    "documento, fino in fondo. Non è la partita IVA il numero di registro delle imprese ('Reg Nr.', 'Company "
+    "number', 'Registration #'), né l'IBAN o il numero di conto ('Account number', 'IBAN'). "
     "Un fornitore extra-UE può avere una partita IVA europea (di un suo rappresentante in Europa): usa quella. "
     "Non inventare mai: se un dato non è presente, lascialo vuoto."
 )
@@ -60,7 +62,8 @@ class DatiFattura(BaseModel):
         description="Paese del FORNITORE come codice ISO di 2 lettere (IT, NL, IE, DE, FR, GB, US, CH...), "
                     "dedotto dall'INDIRIZZO della sede del fornitore. Attenzione: una società estera può avere "
                     "una partita IVA italiana o europea (es. una compagnia aerea inglese con P.IVA IT): "
-                    "il paese resta quello dell'indirizzo, non quello della partita IVA.")
+                    "il paese resta quello dell'indirizzo, non quello della partita IVA. Non usare l'indirizzo della BANCA "
+                    "(coordinate bancarie, 'Bank address'), né quello del cliente.")
     indirizzo_fornitore: Optional[str] = Field(
         default=None,
         description="Indirizzo del FORNITORE su una riga (via, CAP, città, paese), copiato come scritto.")
@@ -218,7 +221,7 @@ def normalizza_data(testo: Optional[str], paese: Optional[str] = None) -> Option
         return None
     # Date a parole: "22 settembre 2026", "1 September 2026", "September 1, 2026", "01-Sep-2026", "1st Sep 2026"
     parole = [p.strip(".") for p in
-              re.sub(r"(\d)(st|nd|rd|th)\b", r"\1", testo.lower().replace(",", " ").replace("-", " ")).split()]
+              re.sub(r"(\d)(st|nd|rd|th)\b", r"\1", re.sub(r"[,\-]|/(?=[^\W\d_])|(?<=[^\W\d_])/", " ", testo.lower())).split()]
     # Si convertono direttamente in AAAA-MM-GG: la regola americana (mese/giorno) vale solo per le date
     # scritte con le cifre. Prima "21 settembre 2026" di un fornitore USA diventava 21/9 e poi "mese 21".
     if len(parole) == 3 and parole[2].isdigit():
@@ -275,6 +278,16 @@ def e_estero(paese: Optional[str]) -> bool:
     return paese is not None and paese != "IT"
 
 
+def e_un_iban(codice: str) -> bool:
+    """Un IBAN ha lettere del paese + 2 cifre di controllo + il conto, e passa il controllo "modulo 97".
+    In prova il modello aveva messo come partita IVA l'IBAN svizzero CH0683041111210001219."""
+    codice = re.sub(r"\s", "", codice or "").upper()
+    if not re.fullmatch(r"[A-Z]{2}\d{2}[A-Z0-9]{11,30}", codice):
+        return False
+    numeri = "".join(str(int(c, 36)) for c in codice[4:] + codice[:4])
+    return int(numeri) % 97 == 1
+
+
 def normalizza_piva(testo: Optional[str], paese: Optional[str] = None) -> tuple:
     """
     Python (non l'LLM) mette in forma la partita IVA. Restituisce (partita_iva, paese).
@@ -285,8 +298,12 @@ def normalizza_piva(testo: Optional[str], paese: Optional[str] = None) -> tuple:
     paese = normalizza_paese(paese)
     pulita = re.sub(r"[\s.\-/:]", "", vuoto_se_niente(testo) or "").upper()
     # Etichette che a volte vengono copiate insieme al numero ("VAT REG", "EIN", "ABN", "Tax ID"...)
-    pulita = re.sub(r"^(VATREG|VATNO|VATNUMBER|VAT|TAXID|EIN|ABN|GST|UIDNR|UID|MWST|USTIDNR|TVA|BTW|NIF|CIF|PIVA)",
-                    "", pulita)
+    # Etichette copiate insieme al numero, anche dopo il codice del paese ("CA GST/HST 798824835 RT0001")
+    etichette = r"(VATREG|VATNO|VATNUMBER|VAT|TAXID|TINNUMBER|TIN|EIN|ABN|GSTHST|GST|HST|QST|UIDNR|UID|MWST|USTIDNR|TVA|BTW|NIF|CIF|PIVA)"
+    pulita = re.sub(rf"^{etichette}", "", pulita)
+    pulita = re.sub(rf"^([A-Z]{{2}}){etichette}", r"\1", pulita)
+    if e_un_iban(pulita):
+        pulita = ""                                # è un conto corrente, non una partita IVA
     if config.AZIENDA_PIVA and pulita.removeprefix("IT") == config.AZIENDA_PIVA:
         pulita = ""                                # è la NOSTRA partita IVA (cliente): non è del fornitore
     if pulita == PIVA_ESTERO_ASSENTE or re.fullmatch(r"EU\d+", pulita):
@@ -348,15 +365,18 @@ def normalizza_valuta(testo: Optional[str]) -> Optional[str]:
     return testo if re.fullmatch(r"[A-Z]{3}", testo) else None
 
 
-def in_dizionario(nome_file: str, dati: DatiFattura) -> dict:
+def in_dizionario(nome_file: str, dati: DatiFattura, testo: Optional[str] = None) -> dict:
     """Trasforma quello che ha letto l'LLM in un dizionario con gli importi in centesimi.
     Gli importi restano nella VALUTA DELLA FATTURA: la conversione in euro (cambio BdI del giorno
     della fattura) la fa Python dopo, in cambi_bdi.py."""
     partita_iva, paese = normalizza_piva(dati.partita_iva, dati.paese_fornitore)
     # Se una data della fattura è per forza all'americana ("09/30/2026"), lo sono tutte: altrimenti
     # la scadenza "10/07/2026" (7 ottobre) diventava il 10 luglio, prima della data della fattura.
+    # Si guardano anche TUTTE le date scritte nel documento: in prova "Date 9/1/2026" era ambigua, ma più sotto
+    # c'era "Service Date 8/31/2026" (per forza americana), quindi 9/1 = 1 settembre, non 9 gennaio.
+    date_nel_testo = re.findall(r"\b\d{1,2}/\d{1,2}/\d{4}\b", testo or "")
     formato_date = "US" if any(_per_forza_americana(d) for d in (dati.data_emissione, dati.data_scadenza,
-                                                                  dati.fine_periodo)) else paese
+                                                                  dati.fine_periodo, *date_nel_testo)) else paese
     valuta = normalizza_valuta(dati.valuta)
     if valuta is None and paese == "IT":
         valuta = "EUR"

@@ -139,3 +139,62 @@ def test_vies_occupato_non_vuol_dire_non_valida(monkeypatch):
     monkeypatch.setattr(verifica_piva.httpx, "get", lambda *a, **k: Risposta())
     monkeypatch.setattr(verifica_piva.time, "sleep", lambda s: None)
     assert verifica_piva.verifica("NL123456789B01", "NL")["esito"] == "non_disponibile"
+
+
+def _fattura_estera(**dati):
+    base = {"id": "f.pdf", "fornitore": "Spire Media Limited", "partita_iva": "HK12345678", "paese_fornitore": "HK",
+            "indirizzo_fornitore": "18 Luard Rd, Wan Chai", "numero": "AS-001", "data_emissione": "2026-09-30"}
+    return base | dati
+
+
+def test_rielaborare_la_stessa_fattura_non_crea_modifiche(senza_rete):
+    # Caso vero: la stessa fattura elaborata più volte, letta una volta HK e una volta IE.
+    anagrafica_esteri.aggiorna_da_fattura(_fattura_estera())
+    assert anagrafica_esteri.aggiorna_da_fattura(_fattura_estera(partita_iva="IE12345678", paese_fornitore="IE")) == []
+    scheda = anagrafica_esteri.carica()[0]
+    assert scheda["storico"] == [] and len(scheda["fatture"]) == 1
+
+
+def test_cambia_solo_il_prefisso_del_paese_non_e_un_cambio_di_partita_iva(senza_rete):
+    anagrafica_esteri.aggiorna_da_fattura(_fattura_estera())
+    avvisi = anagrafica_esteri.aggiorna_da_fattura(_fattura_estera(partita_iva="IE12345678", paese_fornitore="IE",
+                                                                   numero="AS-002", data_emissione="2026-10-31"))
+    assert "paese della partita IVA da controllare" in avvisi[0]
+    assert anagrafica_esteri.carica()[0]["storico"] == []
+
+
+def test_partita_iva_davvero_cambiata(senza_rete):
+    anagrafica_esteri.aggiorna_da_fattura(_fattura_estera())
+    avvisi = anagrafica_esteri.aggiorna_da_fattura(_fattura_estera(partita_iva="HK99999999", numero="AS-002",
+                                                                   data_emissione="2026-10-31"))
+    assert "partita IVA cambiato" in avvisi[0]
+
+
+def test_stesso_indirizzo_scritto_in_modo_diverso():
+    from anagrafica_esteri import _uguale
+    assert _uguale("Calle Mayor 10, Planta 2, 29001 Málaga, Spain",
+                   "Calle Mayor 10 Planta 2 29001 Málaga Málaga Spain", indirizzo=True)      # caso vero (Lucerne Stock)
+    assert _uguale("WOODGROVE N.V.", "Woodgrove NV")
+    assert not _uguale("Calle Mayor 10, Málaga", "Calle Larios 5, Málaga")      # via diversa: cambiato
+
+
+def test_partita_iva_non_letta_non_e_un_cambio(senza_rete):
+    # Caso vero (NWD): "Tin Number: 10000001X" letto una volta sì e una volta no.
+    anagrafica_esteri.aggiorna_da_fattura(_fattura_estera(partita_iva="CY10000001X", paese_fornitore="CY"))
+    avvisi = anagrafica_esteri.aggiorna_da_fattura(_fattura_estera(partita_iva="OO99999999999", paese_fornitore="CY",
+                                                                   numero="AS-002", data_emissione="2026-10-31"))
+    assert "non trovata sulla fattura" in avvisi[0] and anagrafica_esteri.carica()[0]["storico"] == []
+
+
+def test_numero_oss_accanto_alla_partita_iva_non_e_un_cambio(senza_rete):
+    # Caso vero (Litware): fattura e nota di credito riportano sia "GB 123456782" sia "EU372000025".
+    anagrafica_esteri.aggiorna_da_fattura(_fattura_estera(partita_iva="GB123456782", paese_fornitore="GB"))
+    avvisi = anagrafica_esteri.aggiorna_da_fattura(_fattura_estera(partita_iva="EU372000025", paese_fornitore="GB",
+                                                                   numero="CN-1", data_emissione="2026-09-30"))
+    assert "da controllare quale usare" in avvisi[0] and anagrafica_esteri.carica()[0]["storico"] == []
+
+
+def test_paese_in_fondo_all_indirizzo_non_e_un_cambio():
+    from anagrafica_esteri import _uguale
+    assert _uguale("2 Queens Ave Oakleigh VIC 3166 Australia", "2 Queens Ave Oakleigh VIC  3166", indirizzo=True)
+    assert not _uguale("Northwind BV", "Northwind Europe BV")       # nel NOME una parola in più è un cambio vero

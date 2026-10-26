@@ -47,9 +47,22 @@ def _salva(schede: list) -> None:
 # ---------------------------------------------------------------------------
 # AIUTI
 # ---------------------------------------------------------------------------
-def _uguale(a: Optional[str], b: Optional[str]) -> bool:
-    pulito = lambda t: re.sub(r"[^0-9a-z]", "", (t or "").lower())
-    return pulito(a) == pulito(b)
+def _parole_di(testo: Optional[str]) -> set:
+    """Parole senza accenti, maiuscole e punteggiatura: "Málaga," = "MALAGA"."""
+    import unicodedata
+    senza_accenti = unicodedata.normalize("NFKD", testo or "").encode("ascii", "ignore").decode().lower()
+    return set(re.findall(r"[0-9a-z]+", senza_accenti))
+
+
+def _uguale(a: Optional[str], b: Optional[str], indirizzo: bool = False) -> bool:
+    """Stesso contenuto anche se scritto in modo diverso: virgole, accenti, parole ripetute o in altro ordine.
+    In prova: "Calle Mayor 10, Planta 2, 29001 Málaga, Spain" e
+              "Calle Mayor 10 Planta 2 29001 Málaga Málaga Spain" risultavano "indirizzo cambiato"."""
+    attaccato = lambda t: "".join(sorted(_parole_di(t)))
+    pa, pb = _parole_di(a), _parole_di(b)
+    if indirizzo and pa and pb and (pa <= pb or pb <= pa) and len(pa ^ pb) <= 1:
+        return True                    # una sola parola in più, es. "Australia" in fondo all'indirizzo (in prova)
+    return pa == pb or re.sub(r"[^0-9a-z]", "", (a or "").lower()) ==         re.sub(r"[^0-9a-z]", "", (b or "").lower()) or attaccato(a) == attaccato(b)
 
 
 def _chiave(partita_iva: Optional[str], fornitore: Optional[str]) -> str:
@@ -109,16 +122,30 @@ def avvisi_bozza(dati: dict) -> list:
         return avvisi
     if not _uguale(scheda["fornitore"], dati.get("fornitore")):
         avvisi.append(f"ANAGRAFICA: nome diverso dalla scheda (\"{scheda['fornitore']}\").")
-    if dati.get("indirizzo_fornitore") and not _uguale(scheda["indirizzo"], dati["indirizzo_fornitore"]):
+    if dati.get("indirizzo_fornitore") and not _uguale(scheda["indirizzo"], dati["indirizzo_fornitore"], indirizzo=True):
         avvisi.append(f"ANAGRAFICA: indirizzo diverso dalla scheda (\"{scheda['indirizzo']}\").")
     return avvisi
 
 
+def _riferimento(fattura: dict) -> str:
+    """Identità della FATTURA (numero + data), per riconoscerla se viene elaborata di nuovo."""
+    return f"{re.sub(r'[^0-9a-z]', '', (fattura.get('numero') or '').lower())}|{fattura.get('data_emissione') or ''}"
+
+
+def _solo_cifre(partita_iva: Optional[str]) -> str:
+    return re.sub(r"^[A-Z]{2}", "", (partita_iva or "").upper())
+
+
 def aggiorna_da_fattura(fattura: dict) -> list:
-    """Dopo la registrazione: crea o aggiorna la scheda del fornitore. Restituisce gli avvisi."""
+    """Dopo la registrazione: crea o aggiorna la scheda del fornitore. Restituisce gli avvisi.
+    Una fattura già vista non produce modifiche: rielaborare un mese non deve creare note false
+    (in prova: Adatum riletta più volte, il paese letto prima HK e poi IE, "partita IVA cambiata")."""
     if not e_estero(fattura.get("paese_fornitore")):
         return []
     schede = carica()
+    rif = _riferimento(fattura)
+    if any(rif in s.get("riferimenti", []) for s in schede):
+        return []
     chiave = _chiave(fattura.get("partita_iva"), fattura.get("fornitore"))
     scheda = _trova(schede, chiave)
     fonte = f"fattura {fattura['id']} del {fattura['data_emissione']}"
@@ -126,7 +153,22 @@ def aggiorna_da_fattura(fattura: dict) -> list:
 
     if scheda is None:
         stesso_nome = _trova_per_nome(schede, fattura.get("fornitore"))
-        if stesso_nome:                                         # stesso fornitore, partita IVA cambiata
+        if stesso_nome and fattura.get("partita_iva") == PIVA_ESTERO_ASSENTE and                 stesso_nome["partita_iva"] != PIVA_ESTERO_ASSENTE:
+            # la fattura non la riporta (o non è stata letta), ma il fornitore la ha già: non è un cambio
+            scheda = stesso_nome
+            avvisi.append(f"{scheda['fornitore']}: partita IVA non trovata sulla fattura, in anagrafica è "
+                          f"{scheda['partita_iva']}: da controllare.")
+        elif stesso_nome and "EU" in ((stesso_nome["partita_iva"] or "")[:2], (fattura.get("partita_iva") or "")[:2]):
+            # in prova (Litware): la fattura riporta sia "VAT GB 123456782" sia il numero OSS "EU372000025"
+            scheda = stesso_nome
+            avvisi.append(f"{scheda['fornitore']}: ha sia la partita IVA {scheda['partita_iva']} sia il numero "
+                          f"{fattura.get('partita_iva')}: da controllare quale usare.")
+        elif stesso_nome and _solo_cifre(stesso_nome["partita_iva"]) == _solo_cifre(fattura.get("partita_iva")):
+            # stesse cifre, cambia solo il prefisso del paese: è una lettura diversa, non un cambio
+            scheda = stesso_nome
+            avvisi.append(f"{scheda['fornitore']}: paese della partita IVA da controllare "
+                          f"({scheda['partita_iva']} o {fattura.get('partita_iva')}).")
+        elif stesso_nome:                                       # stesso fornitore, partita IVA cambiata
             scheda = stesso_nome
             avvisi.append(_modifica(scheda, "partita IVA", scheda["partita_iva"], fattura.get("partita_iva"), fonte))
             scheda["chiave"], scheda["partita_iva"] = chiave, fattura.get("partita_iva")
@@ -142,10 +184,11 @@ def aggiorna_da_fattura(fattura: dict) -> list:
         if not _uguale(scheda["fornitore"], fattura["fornitore"]):
             avvisi.append(_modifica(scheda, "nome", scheda["fornitore"], fattura["fornitore"], fonte))
             scheda["fornitore"] = fattura["fornitore"]
-        if fattura.get("indirizzo_fornitore") and not _uguale(scheda["indirizzo"], fattura["indirizzo_fornitore"]):
+        if fattura.get("indirizzo_fornitore") and not _uguale(scheda["indirizzo"], fattura["indirizzo_fornitore"], indirizzo=True):
             avvisi.append(_modifica(scheda, "indirizzo", scheda["indirizzo"], fattura["indirizzo_fornitore"], fonte))
             scheda["indirizzo"] = fattura["indirizzo_fornitore"]
     scheda["fatture"].append(fattura["id"])
+    scheda.setdefault("riferimenti", []).append(rif)
     scheda["ultima_fattura"] = fattura["data_emissione"]
     _salva(schede)
     return avvisi
@@ -171,7 +214,7 @@ def controllo_mensile() -> str:
         elif vecchio.get("esito") and nuovo["esito"] != vecchio["esito"]:
             modifiche.append(_modifica(s, "esito verifica partita IVA", vecchio["esito"], nuovo["esito"], fonte))
         for campo, chiave in (("nome ufficiale", "nome_ufficiale"), ("indirizzo ufficiale", "indirizzo_ufficiale")):
-            if vecchio.get(chiave) and nuovo.get(chiave) and not _uguale(vecchio[chiave], nuovo[chiave]):
+            if vecchio.get(chiave) and nuovo.get(chiave) and not _uguale(vecchio[chiave], nuovo[chiave], indirizzo=chiave == "indirizzo_ufficiale"):
                 modifiche.append(_modifica(s, campo, vecchio[chiave], nuovo[chiave], fonte))
         s["ufficiale"] = nuovo
     _salva(schede)

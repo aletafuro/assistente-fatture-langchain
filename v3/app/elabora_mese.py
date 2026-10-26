@@ -258,7 +258,8 @@ def elabora(cartella: Path, amex: Optional[Path] = None, unicredit: Optional[Pat
             try:
                 cambiati = anagrafica_esteri.aggiorna_da_fattura(
                     f | {"id": f["file"], "data_emissione": f.get("data_emissione") or ""})
-                f["note"] += [nota_anagrafica(n) for n in cambiati if "cambiato" in n or "Creata" in n]
+                f["note"] += [nota_anagrafica(n) for n in cambiati if "cambiato" in n or "Creata" in n
+                              or "da controllare" in n]
             except Exception as errore:
                 f["note"].append(f"anagrafica non aggiornata ({errore})")
         fatture.append(f)

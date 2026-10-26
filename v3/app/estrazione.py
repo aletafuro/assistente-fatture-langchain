@@ -52,12 +52,12 @@ def _servizio_non_disponibile(errore: Exception) -> ErroreEstrazione:
 def estrai_da_testo(testo: str, nome: str = "testo", grezzo: dict = None) -> dict:
     """grezzo = risposta del modello già salvata: si rifanno solo le conversioni Python, senza chiamarlo."""
     if grezzo is not None:
-        return in_dizionario(nome, DatiFattura(**grezzo))
+        return in_dizionario(nome, DatiFattura(**grezzo), testo)
     try:
         risposta = _chain_testo.invoke({"testo": testo})
     except Exception as errore:                      # solo la chiamata al modello: il resto non è "OpenAI"
         raise _servizio_non_disponibile(errore)
-    return in_dizionario(nome, risposta)
+    return in_dizionario(nome, risposta, testo)
 
 
 def estrai_da_pdf(percorso: Path, grezzo: dict = None) -> dict:

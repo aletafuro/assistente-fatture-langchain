@@ -149,3 +149,31 @@ def test_la_risposta_salvata_del_modello_si_riusa_senza_richiamarlo(monkeypatch)
 def test_importi_scritti_in_modo_strano(testo, centesimi):
     # Visto su una ricevuta: l'IVA "0%" faceva fallire la conversione (e sembrava un guasto di OpenAI).
     assert euro_in_centesimi(testo) == centesimi
+
+
+def test_un_iban_non_e_mai_una_partita_iva():
+    # Caso vero: l'IBAN svizzero del fornitore era stato letto come partita IVA.
+    from fatture_comuni import e_un_iban
+    assert e_un_iban("CH0683041111210001219") and e_un_iban("IT60 X054 2811 1010 0000 0123 456")
+    assert not e_un_iban("NL123456789B01") and not e_un_iban("IE9876543WH")
+    assert normalizza_piva("CH0683041111210001219", "HK") == (PIVA_ESTERO_ASSENTE, "HK")
+
+
+@pytest.mark.parametrize("testo, paese", [("01/Sep/2026", None), ("1/sep/2026", "US"), ("01/Sep/2026", "GB")])
+def test_data_con_barre_e_mese_in_lettere(testo, paese):
+    # Caso vero (Blue Yonder Leads): "01/Sep/2026" restava vuota, e con lei la data di registrazione.
+    assert normalizza_data(testo, paese) == "2026-09-01"
+
+
+def test_formato_americano_riconosciuto_dalle_altre_date_del_documento():
+    # Caso vero (Margie Media): "Date 9/1/2026" ambigua, ma nel testo c'è "Service Date 8/31/2026".
+    from fatture_comuni import DatiFattura, in_dizionario
+    d = in_dizionario("f.pdf", DatiFattura(fornitore="Rossi Ltd", paese_fornitore="GB", data_emissione="9/1/2026",
+                                           data_scadenza="10/1/2026", regime_iva="esente"),
+                      "Date 9/1/2026\nDue Date 10/1/2026\nService Date 8/31/2026")
+    assert d["data_emissione"] == "2026-09-01" and d["data_scadenza"] == "2026-10-01"
+
+
+def test_etichetta_gst_hst_canadese():
+    assert normalizza_piva("GST/HST 798824835 RT0001", "CA") == ("CA798824835RT0001", "CA")
+    assert normalizza_piva("CA GST/HST 798824835 RT0001", "CA") == ("CA798824835RT0001", "CA")
