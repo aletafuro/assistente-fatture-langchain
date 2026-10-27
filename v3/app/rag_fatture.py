@@ -9,8 +9,12 @@ Il registro conosce fornitore, numero, date e importi, ma NON cosa c'è scritto 
 - Il testo completo di ogni fattura del registro si ricava dal suo ORIGINALE:
   PDF -> pypdf · foto -> trascrizione con modello vision · vocale -> trascrizione audio · .txt -> letto.
   Si calcola una sola volta e si salva in dati/v2_rag_testi.json (cache).
-- Embedding text-embedding-3-small + InMemoryVectorStore; l'indice si costruisce al primo uso
-  e si aggiorna quando il grafo registra una fattura nuova (aggiungi()).
+- Embedding text-embedding-3-small. L'indice si sceglie dal .env (RAG_INDICE):
+    memoria   (predefinito) InMemoryVectorStore: si ricostruisce, pagando gli embedding, a ogni avvio;
+    pgvector  Postgres con l'estensione pgvector (PGVECTOR_URL): resta salvato; all'avvio si aggiungono
+              solo le fatture che mancano e si tolgono le annullate. Regge migliaia di fatture.
+  In tutti e due i casi l'id del documento è collezione/id della fattura (fatture/F0003): niente doppioni.
+  Si aggiorna quando il grafo registra una fattura nuova (aggiungi()).
 - Esposto all'agente come tool: le domande su COSA è stato acquistato vanno qui,
   quelle su QUANTO / stato di pagamento vanno ai tool del registro.
 """
@@ -71,17 +75,47 @@ def _cache() -> dict:
     return json.loads(P.RAG_TESTI.read_text(encoding="utf-8")) if P.RAG_TESTI.exists() else {}
 
 
-def _indice_pronto() -> InMemoryVectorStore:
+def _nuovo_indice():
+    embedding = OpenAIEmbeddings(model="text-embedding-3-small")
+    if P.config.RAG_INDICE == "pgvector":
+        from langchain_postgres import PGVector
+        return PGVector(embeddings=embedding, collection_name=P.config.RAG_COLLEZIONE,
+                        connection=P.config.PGVECTOR_URL, use_jsonb=True)
+    return InMemoryVectorStore(embedding)
+
+
+def _chiave(id_fattura: str) -> str:
+    """Id del documento nell'indice. In langchain-postgres l'id vale per TUTTA la tabella, non per la
+    collezione: senza il nome della collezione, la F0001 della valutazione e quella vera si sovrascrivono."""
+    return f"{P.config.RAG_COLLEZIONE}/{id_fattura}"
+
+
+def _indice_pronto():
     global _indice
     with _lucchetto:
         if _indice is None:
             cache = _cache()
-            documenti = [d for f in reg.carica_registro() if not f["annullata"] and (d := _documento(f, cache))]
+            fatture = reg.carica_registro()
+            documenti = [d for f in fatture if not f["annullata"] and (d := _documento(f, cache))]
             P.RAG_TESTI.write_text(json.dumps(cache, ensure_ascii=False, indent=2), encoding="utf-8")
-            _indice = InMemoryVectorStore(OpenAIEmbeddings(model="text-embedding-3-small"))
-            if documenti:
-                _indice.add_documents(documenti)
+            _indice = _nuovo_indice()
+            # Con pgvector l'indice c'è già dall'avvio precedente: si calcolano gli embedding solo dei nuovi.
+            gia_presenti = {d.id for d in _indice.get_by_ids([_chiave(d.metadata["id"]) for d in documenti])}
+            nuovi = [d for d in documenti if _chiave(d.metadata["id"]) not in gia_presenti]
+            if nuovi:
+                _indice.add_documents(nuovi, ids=[_chiave(d.metadata["id"]) for d in nuovi])
+            annullate = [_chiave(f["id"]) for f in fatture if f["annullata"]]
+            if annullate and P.config.RAG_INDICE == "pgvector":
+                _indice.delete(ids=annullate)
         return _indice
+
+
+def svuota_indice() -> None:
+    """Cancella l'indice (solo pgvector): lo usa la valutazione, per partire ogni volta da zero."""
+    global _indice
+    if P.config.RAG_INDICE == "pgvector":
+        _nuovo_indice().delete_collection()
+    _indice = None
 
 
 def aggiungi(fattura: dict) -> None:
@@ -92,7 +126,15 @@ def aggiungi(fattura: dict) -> None:
     if documento:
         P.RAG_TESTI.write_text(json.dumps(cache, ensure_ascii=False, indent=2), encoding="utf-8")
         with _lucchetto:
-            indice.add_documents([documento])
+            indice.add_documents([documento], ids=[_chiave(documento.metadata["id"])])
+
+
+K = 4   # quante fatture si passano al modello per ogni domanda
+
+
+def cerca(domanda: str, k: int = K) -> list:
+    """Le k fatture più vicine alla domanda: la usa il tool dell'agente e la valutazione (valuta_rag.py)."""
+    return _indice_pronto().similarity_search(domanda, k=k)
 
 
 @tool(response_format="content_and_artifact")
@@ -104,7 +146,7 @@ def cerca_nel_contenuto_delle_fatture(domanda: str):
     Args:
         domanda: cosa cercare, in parole semplici (es. 'toner', 'consulenza strategica').
     """
-    trovati = _indice_pronto().similarity_search(domanda, k=4)
+    trovati = cerca(domanda)
     if not trovati:
         return "Nessuna fattura pertinente trovata.", []
     return "\n\n".join(d.page_content for d in trovati), trovati

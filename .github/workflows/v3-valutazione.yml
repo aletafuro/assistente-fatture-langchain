@@ -1,4 +1,4 @@
-# Valutazione della LETTURA con il modello vero (golden set italiano + estero).
+# Valutazione con il modello vero: LETTURA (golden set italiano + estero) e RAG (golden set RAG con RAGAS).
 # Costa qualche centesimo, quindi parte solo a mano (Actions -> "v3 - valutazione" -> Run workflow).
 # La chiave OpenAI sta nei secrets del repository (Settings -> Secrets and variables -> Actions -> OPENAI_API_KEY):
 # non è mai scritta nel codice e GitHub la nasconde nei log.
@@ -26,14 +26,24 @@ jobs:
       AZIENDA_PIVA: "IT09999999999"
       MLFLOW_DISABLE_AGENT_HINT: "1"
     steps:
+      # Langfuse è facoltativo: senza questi secrets la valutazione gira lo stesso, senza tracce.
+      LANGFUSE_PUBLIC_KEY: ${{ secrets.LANGFUSE_PUBLIC_KEY }}
+      LANGFUSE_SECRET_KEY: ${{ secrets.LANGFUSE_SECRET_KEY }}
+      LANGFUSE_BASE_URL: https://cloud.langfuse.com
+    steps:
       - uses: actions/checkout@v5
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v7
 
       - name: Golden set con MLflow
         run: PYTHONPATH=app uv run --frozen python app/esperimento.py "${{ inputs.modello }}" "${{ inputs.giri }}"
 
-      - name: Salva il database degli esperimenti
+      - name: Valutazione del RAG con RAGAS
+        run: uv run --frozen --group valutazione python app/valuta_rag.py
+
+      - name: Salva il database degli esperimenti e i risultati del RAG
         uses: actions/upload-artifact@v4
         with:
           name: mlflow-${{ inputs.modello }}
-          path: v3/mlflow.db
+          path: |
+            v3/mlflow.db
+            v3/valutazione/VALUTAZIONE_RAG_memoria.md

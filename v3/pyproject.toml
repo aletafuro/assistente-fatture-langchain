@@ -29,6 +29,8 @@ dependencies = [
     "pypdfium2==5.14.0",
     "fastapi==0.162.0",
     "uvicorn==0.54.0",
+    "langfuse==5.0.4",
+    "langchain-postgres==0.0.19",
 ]
 
 # Strumenti che servono solo a chi sviluppa: non finiscono nel container di produzione.
@@ -40,6 +42,9 @@ dev = [
 dspy = [
     "dspy==3.3.0",
     "optuna>=4",
+]
+valutazione = [
+    "ragas==0.3.1",
 ]
 
 [tool.uv]

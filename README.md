@@ -9,8 +9,8 @@ Realizzato con **LangChain** e **LangGraph** in Python, in tre versioni.
 La v3 porta l'assistente in un **ufficio amministrativo vero**, dove è in uso in un gruppo Telegram:
 **fatture estere** con controvalore in euro (estratti conto delle carte o cambio Banca d'Italia del giorno),
 verifica delle partite IVA sul VIES, **registrazione contabile** a blocchi mensili, **scadenziario** annuale,
-**ratei e risconti** a qualsiasi data, **API REST FastAPI** in sola lettura per gli altri programmi.
-E soprattutto il lavoro di **MLOps**: 174 test senza LLM, `uv` con lock file,
+**ratei e risconti** a qualsiasi data, **API REST FastAPI** in sola lettura per gli altri programmi, RAG valutato con **RAGAS** su indice in memoria e su
+**pgvector**, tracce delle chiamate su **Langfuse**. E soprattutto il lavoro di **MLOps**: 182 test senza LLM, `uv` con lock file,
 **Docker** multi-stadio con i test dentro, **GitHub Actions**, esperimenti **MLflow** per scegliere il modello,
 **DSPy** per l'interprete delle risposte (dall'88,9% al 98,6%), aggiornamento sul server solo se i test passano.
 Tutto in [`v3/README.md`](v3/README.md).

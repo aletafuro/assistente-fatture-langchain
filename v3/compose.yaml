@@ -11,6 +11,8 @@ services:
     env_file: .env
     environment:
       CARTELLA_DATI: /dati
+      # Usato solo con RAG_INDICE=pgvector nel .env: dentro Docker il database si chiama "db".
+      PGVECTOR_URL: postgresql+psycopg://fatture:${PGVECTOR_PASSWORD:-}@db:5432/fatture
     volumes:
       - ./dati:/dati
       - ./segreti:/app/segreti
@@ -34,4 +36,21 @@ services:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/salute')"]
       interval: 30s
       timeout: 5s
+    restart: unless-stopped
+
+  # Postgres + pgvector per l'indice del RAG. Facoltativo: parte solo con
+  #   docker compose --profile pgvector up -d      (e RAG_INDICE=pgvector, PGVECTOR_PASSWORD nel .env)
+  # Nessuna porta verso l'esterno: lo raggiunge solo il bot, dalla rete interna di Docker.
+  db:
+    image: pgvector/pgvector:pg17
+    profiles: [pgvector]
+    environment:
+      POSTGRES_USER: fatture
+      POSTGRES_DB: fatture
+      POSTGRES_PASSWORD: ${PGVECTOR_PASSWORD:-}
+    volumes:
+      - ./dati/pgvector:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "fatture"]
+      interval: 10s
     restart: unless-stopped

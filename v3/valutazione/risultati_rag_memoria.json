@@ -1,0 +1,549 @@
+{
+  "riassunto": {
+    "data": "2026-10-27T11:51:20",
+    "indice": "InMemoryVectorStore",
+    "k": 4,
+    "modello_risposta": "gpt-4.1-mini",
+    "modello_giudice": "gpt-4.1-mini",
+    "domande": 16,
+    "secondi": 53,
+    "ricerca": {
+      "hit": 1.0,
+      "recall": 1.0,
+      "mrr": 0.922
+    },
+    "ragas": {
+      "llm_context_precision_with_reference": 0.865,
+      "context_recall": 1.0,
+      "faithfulness": 0.946,
+      "factual_correctness": 0.611,
+      "answer_relevancy": 0.776
+    }
+  },
+  "domande": [
+    {
+      "domanda": "Chi ci ha venduto il toner?",
+      "riferimento": "Alfa Forniture SRL, con la fattura 2026/037 del 10/06/2026: 8 toner compatibili a 60,00 euro l'uno, 480,00 euro.",
+      "attese": [
+        "F0001"
+      ],
+      "trovate": [
+        "F0001",
+        "F0010",
+        "F0015",
+        "F0012"
+      ],
+      "brani": [
+        "[F0001 | Alfa Forniture SRL | fattura n. 2026/037 del 2026-06-10]\nAlfa Forniture SRL\nP. IVA 01234567890\nVia delle Industrie 12, 70100 Bari (BA)\nFATTURA\n N. 2026/037\nData 2026-06-10\nDestinatario\nImpresa Cliente SRL  -  P. IVA 09999999999\nCorso Italia 1, 70121 Bari (BA)\nDescrizione\nQ.ta\nPrezzo\nImporto\nCarta A4 risme\n60\n12,00 €\n720,00 €\nToner compatibili\n8\n60,00 €\n480,00 €\nImponibile\n1.200,00 €\nIVA 22%\n264,00 €\nTOTALE\n1.464,00 €\nScadenza pagamento: 2026-07-10\nModalita: bonifico bancario IBAN IT00 A000 0000 0000 0000 0000 000\n",
+        "[F0010 | Officina Digitale S.r.l. | fattura n. FAT/2025/0048 del 2025-04-14]\nOfficina Digitale S.r.l.\nSOLUZIONI PER IL TUO BUSINESS\n\nVia delle Idee, 12\n40125 Bologna (BO)\nP.IVA 12345678901\nC.F. 12345678901\ninfo@officinadigitale.it\nwww.officinadigitale.it\n\nCliente\nVerdeCasa S.n.c.\nVia dei Tigli, 8\n20122 Milano (MI)\nP.IVA 98765432109\nC.F. 98765432109\n\nIDEE\nTECNOLOGIA\nPERSONE\n\nFATTURA\n\nNumero fattura\nFAT/2025/0048\n\nData emissione\n14/04/2025\n\nData scadenza\n14/05/2025\n\nCondizioni di pagamento\nBonifico bancario 30 gg\n\nOggetto\nFornitura servizi di consulenza e sviluppo\nper il progetto sito web aziendale\n\nDescrizione                Q.tà    Prezzo unitario    Importo\nConsulenza strategica\nAnalisi requisiti e definizione architettura       8       € 75,00           € 600,00\n\nSviluppo sito web\nRealizzazione e personalizzazione tema             40      € 65,00           € 2.600,00\n\nIntegrazione CMS\nConfigurazione e test                               8       € 60,00           € 480,00\n\nFormazione\nSessione formativa per il team cliente             4       € 70,00           € 280,00\n\nSubtotale                                                        € 3.960,00\n\nIVA 22%                                                         € 871,20\n\nTotale                                                         € 4.831,20\n\nCoordinate bancarie\nBanca: BPER Banca S.p.A.\nIBAN: IT32 X053 8702 4010 0000 1234 567\nIntestatario: Officina Digitale S.r.l.\n\nGrazie per la fiducia!\n\nCostruiamo\ninsieme il digitale\ndi domani.",
+        "[F0015 | Cartoleria Bianchi SRL | fattura n. 45 del 2026-09-24]\nFattura della Cartoleria Bianchi S.r.l., partita IVA 01122334455, numero 45 del 24 settembre 2026, scadenza 24 ottobre 2026, imponibile 200 euro, IVA 44 euro, totale 244 euro.",
+        "[F0012 | Elettroimpianti Verdi S.r.l. | fattura n. FAT-2025-0147 del 2025-03-12]\nElettroimpianti Verdi S.r.l.\nImpianti elettrici civili e industriali\nEfficienza oggi, energia per domani\n\nVia delle Industrie, 24 - 35129 Padova (PD)\nP. IVA 05231470968 - C.F. 05231470968\nTel. 049 8203941 - info@elettroimpiantiverdi.it\nwww.elettroimpiantiverdi.it\n\nProgettazione\nInstallazione\nManutenzione\nImpianti fotovoltaici\nDomotica\n\nFATTURA\n\nNumero\nFAT-2025-0147\n\nData\n12/03/2025\n\nCodice cliente\nCLI-0089\n\nModalità di pagamento\nBonifico bancario 30 gg df\n\nFornitore\nElettroimpianti Verdi S.r.l.\nVia delle Industrie, 24\n35129 Padova (PD)\nP. IVA 05231470968\nC.F. 05231470968\n\nCliente\nEdilizia Rossi S.p.A.\nVia Roma, 112\n36077 Altavilla Vicentina (VI)\nP. IVA 04128730245\nC.F. 04128730245\n\nDescrizione                         Q.tà    Prezzo unitario    Importo      IVA\nQuadro elettrico di distribuzione 24 moduli     2       € 180,00          € 360,00    22%\nInterruttore magnetotermico differenziale       6       € 45,00           € 270,00    22%\nCavo FG16 3x2,5 mm² (rotolo 100 m)              3       € 95,00           € 285,00    22%\nInstallazione e collaudo impianto                 1       € 600,00          € 600,00    22%\nSopralluogo tecnico                               1       € 120,00          € 120,00    22%\n\nImponibile                                      € 1.635,00\nIVA 22%                                         € 359,70\n\nTotale documento                               € 1.994,70\n\nNote\nGrazie per aver scelto Elettroimpianti Verdi S.r.l.\nPer qualsiasi chiarimento, non esitate a contattarci.\n\nSoluzioni elettriche per un futuro più sostenibile.\n\nCoordinate bancarie\nIntesa Sanpaolo S.p.A.\nIBAN: IT60 X030 6912 3456 7890 1234 567\nBIC: BCITITMM"
+      ],
+      "risposta": "Il toner è stato venduto da Alfa Forniture SRL, come indicato nella fattura n. 2026/037 del 2026-06-10.",
+      "traccia": null,
+      "ricerca": {
+        "hit": 1.0,
+        "recall": 1.0,
+        "mrr": 1.0
+      },
+      "ragas": {
+        "llm_context_precision_with_reference": 1.0,
+        "context_recall": 1.0,
+        "faithfulness": 1.0,
+        "factual_correctness": 0.67,
+        "answer_relevancy": 0.825
+      }
+    },
+    {
+      "domanda": "Quante risme di carta A4 abbiamo comprato e a che prezzo?",
+      "riferimento": "60 risme di carta A4 a 12,00 euro l'una, 720,00 euro in tutto, da Alfa Forniture SRL (fattura 2026/037).",
+      "attese": [
+        "F0001"
+      ],
+      "trovate": [
+        "F0001",
+        "F0015",
+        "F0010",
+        "F0011"
+      ],
+      "brani": [
+        "[F0001 | Alfa Forniture SRL | fattura n. 2026/037 del 2026-06-10]\nAlfa Forniture SRL\nP. IVA 01234567890\nVia delle Industrie 12, 70100 Bari (BA)\nFATTURA\n N. 2026/037\nData 2026-06-10\nDestinatario\nImpresa Cliente SRL  -  P. IVA 09999999999\nCorso Italia 1, 70121 Bari (BA)\nDescrizione\nQ.ta\nPrezzo\nImporto\nCarta A4 risme\n60\n12,00 €\n720,00 €\nToner compatibili\n8\n60,00 €\n480,00 €\nImponibile\n1.200,00 €\nIVA 22%\n264,00 €\nTOTALE\n1.464,00 €\nScadenza pagamento: 2026-07-10\nModalita: bonifico bancario IBAN IT00 A000 0000 0000 0000 0000 000\n",
+        "[F0015 | Cartoleria Bianchi SRL | fattura n. 45 del 2026-09-24]\nFattura della Cartoleria Bianchi S.r.l., partita IVA 01122334455, numero 45 del 24 settembre 2026, scadenza 24 ottobre 2026, imponibile 200 euro, IVA 44 euro, totale 244 euro.",
+        "[F0010 | Officina Digitale S.r.l. | fattura n. FAT/2025/0048 del 2025-04-14]\nOfficina Digitale S.r.l.\nSOLUZIONI PER IL TUO BUSINESS\n\nVia delle Idee, 12\n40125 Bologna (BO)\nP.IVA 12345678901\nC.F. 12345678901\ninfo@officinadigitale.it\nwww.officinadigitale.it\n\nCliente\nVerdeCasa S.n.c.\nVia dei Tigli, 8\n20122 Milano (MI)\nP.IVA 98765432109\nC.F. 98765432109\n\nIDEE\nTECNOLOGIA\nPERSONE\n\nFATTURA\n\nNumero fattura\nFAT/2025/0048\n\nData emissione\n14/04/2025\n\nData scadenza\n14/05/2025\n\nCondizioni di pagamento\nBonifico bancario 30 gg\n\nOggetto\nFornitura servizi di consulenza e sviluppo\nper il progetto sito web aziendale\n\nDescrizione                Q.tà    Prezzo unitario    Importo\nConsulenza strategica\nAnalisi requisiti e definizione architettura       8       € 75,00           € 600,00\n\nSviluppo sito web\nRealizzazione e personalizzazione tema             40      € 65,00           € 2.600,00\n\nIntegrazione CMS\nConfigurazione e test                               8       € 60,00           € 480,00\n\nFormazione\nSessione formativa per il team cliente             4       € 70,00           € 280,00\n\nSubtotale                                                        € 3.960,00\n\nIVA 22%                                                         € 871,20\n\nTotale                                                         € 4.831,20\n\nCoordinate bancarie\nBanca: BPER Banca S.p.A.\nIBAN: IT32 X053 8702 4010 0000 1234 567\nIntestatario: Officina Digitale S.r.l.\n\nGrazie per la fiducia!\n\nCostruiamo\ninsieme il digitale\ndi domani.",
+        "[F0011 | Studio Creativo Bianchi | fattura n. FAT-2025-014 del 2025-03-12]\nStudio Creativo Bianchi\nIDEE. PROGETTI. COMUNICAZIONE.\n\nVia delle Arti, 12\n40126 Bologna (BO)\nP.IVA 03876541203\ninfo@studiocreativobianchi.it\nwww.studiocreativobianchi.it\n\nFATTURA\n\nNumero\nFAT-2025-014\n\nData emissione\n12/03/2025\n\nData scadenza\n11/04/2025\n\nCliente\n\nVerdeVivo S.r.l.\nVia Nazionale, 45\n50123 Firenze (FI)\nP.IVA 06123450987\n\nDescrizione\n\nQtà\n\nPrezzo unitario\n\nImporto\n\nProgettazione grafica campagna social\nConcept, layout e adattamenti formati\n\n1\n\n€ 800,00\n\n€ 800,00\n\nRealizzazione contenuti visivi\nFotografie e post-produzione\n\n1\n\n€ 600,00\n\n€ 600,00\n\nConsulenza strategica\nPiano editoriale e linee guida comunicazione\n\n1\n\n€ 400,00\n\n€ 400,00\n\nImponibile\n\n€ 1.800,00\n\nIVA 22%\n\n€ 396,00\n\nTotale\n\n€ 2.196,00\n\nModalità di pagamento\n\nBonifico bancario\nIBAN: IT60 X030 6902 4010 0000 0123 456\nIntestato a: Studio Creativo Bianchi\nCausale: FAT-2025-014\n\nGrazie per la fiducia!\n\nCreatività\nfa la differenza."
+      ],
+      "risposta": "Abbiamo comprato 60 risme di carta A4 al prezzo unitario di 12,00 € dalla Alfa Forniture SRL, come indicato nella fattura n. 2026/037 del 2026-06-10.",
+      "traccia": null,
+      "ricerca": {
+        "hit": 1.0,
+        "recall": 1.0,
+        "mrr": 1.0
+      },
+      "ragas": {
+        "llm_context_precision_with_reference": 1.0,
+        "context_recall": 1.0,
+        "faithfulness": 0.8,
+        "factual_correctness": 0.8,
+        "answer_relevancy": 0.946
+      }
+    },
+    {
+      "domanda": "Quali consulenze abbiamo ricevuto?",
+      "riferimento": "Tre: consulenza organizzativa di luglio da Delta Consulting SRL (25 x 200,00 = 5.000,00 euro, fattura 2026/046); consulenza strategica da Officina Digitale S.r.l. (8 x 75,00 = 600,00 euro, fattura FAT/2025/0048); consulenza strategica da Studio Creativo Bianchi (400,00 euro, fattura FAT-2025-014).",
+      "attese": [
+        "F0005",
+        "F0010",
+        "F0011"
+      ],
+      "trovate": [
+        "F0005",
+        "F0010",
+        "F0011",
+        "F0012"
+      ],
+      "brani": [
+        "[F0005 | Delta Consulting SRL | fattura n. 2026/046 del 2026-07-20]\nDelta Consulting SRL\nP. IVA 04567890123\nCorso Vittorio Emanuele 40, 20122 Milano (MI)\nFATTURA\n N. 2026/046\nData 2026-07-20\nDestinatario\nImpresa Cliente SRL  -  P. IVA 09999999999\nCorso Italia 1, 70121 Bari (BA)\nDescrizione\nQ.ta\nPrezzo\nImporto\nConsulenza organizzativa luglio\n25\n200,00 €\n5.000,00 €\nImponibile\n5.000,00 €\nIVA 22%\n1.100,00 €\nTOTALE\n6.100,00 €\nScadenza pagamento: 2026-09-18\nModalita: bonifico bancario IBAN IT00 A000 0000 0000 0000 0000 000\n",
+        "[F0010 | Officina Digitale S.r.l. | fattura n. FAT/2025/0048 del 2025-04-14]\nOfficina Digitale S.r.l.\nSOLUZIONI PER IL TUO BUSINESS\n\nVia delle Idee, 12\n40125 Bologna (BO)\nP.IVA 12345678901\nC.F. 12345678901\ninfo@officinadigitale.it\nwww.officinadigitale.it\n\nCliente\nVerdeCasa S.n.c.\nVia dei Tigli, 8\n20122 Milano (MI)\nP.IVA 98765432109\nC.F. 98765432109\n\nIDEE\nTECNOLOGIA\nPERSONE\n\nFATTURA\n\nNumero fattura\nFAT/2025/0048\n\nData emissione\n14/04/2025\n\nData scadenza\n14/05/2025\n\nCondizioni di pagamento\nBonifico bancario 30 gg\n\nOggetto\nFornitura servizi di consulenza e sviluppo\nper il progetto sito web aziendale\n\nDescrizione                Q.tà    Prezzo unitario    Importo\nConsulenza strategica\nAnalisi requisiti e definizione architettura       8       € 75,00           € 600,00\n\nSviluppo sito web\nRealizzazione e personalizzazione tema             40      € 65,00           € 2.600,00\n\nIntegrazione CMS\nConfigurazione e test                               8       € 60,00           € 480,00\n\nFormazione\nSessione formativa per il team cliente             4       € 70,00           € 280,00\n\nSubtotale                                                        € 3.960,00\n\nIVA 22%                                                         € 871,20\n\nTotale                                                         € 4.831,20\n\nCoordinate bancarie\nBanca: BPER Banca S.p.A.\nIBAN: IT32 X053 8702 4010 0000 1234 567\nIntestatario: Officina Digitale S.r.l.\n\nGrazie per la fiducia!\n\nCostruiamo\ninsieme il digitale\ndi domani.",
+        "[F0011 | Studio Creativo Bianchi | fattura n. FAT-2025-014 del 2025-03-12]\nStudio Creativo Bianchi\nIDEE. PROGETTI. COMUNICAZIONE.\n\nVia delle Arti, 12\n40126 Bologna (BO)\nP.IVA 03876541203\ninfo@studiocreativobianchi.it\nwww.studiocreativobianchi.it\n\nFATTURA\n\nNumero\nFAT-2025-014\n\nData emissione\n12/03/2025\n\nData scadenza\n11/04/2025\n\nCliente\n\nVerdeVivo S.r.l.\nVia Nazionale, 45\n50123 Firenze (FI)\nP.IVA 06123450987\n\nDescrizione\n\nQtà\n\nPrezzo unitario\n\nImporto\n\nProgettazione grafica campagna social\nConcept, layout e adattamenti formati\n\n1\n\n€ 800,00\n\n€ 800,00\n\nRealizzazione contenuti visivi\nFotografie e post-produzione\n\n1\n\n€ 600,00\n\n€ 600,00\n\nConsulenza strategica\nPiano editoriale e linee guida comunicazione\n\n1\n\n€ 400,00\n\n€ 400,00\n\nImponibile\n\n€ 1.800,00\n\nIVA 22%\n\n€ 396,00\n\nTotale\n\n€ 2.196,00\n\nModalità di pagamento\n\nBonifico bancario\nIBAN: IT60 X030 6902 4010 0000 0123 456\nIntestato a: Studio Creativo Bianchi\nCausale: FAT-2025-014\n\nGrazie per la fiducia!\n\nCreatività\nfa la differenza.",
+        "[F0012 | Elettroimpianti Verdi S.r.l. | fattura n. FAT-2025-0147 del 2025-03-12]\nElettroimpianti Verdi S.r.l.\nImpianti elettrici civili e industriali\nEfficienza oggi, energia per domani\n\nVia delle Industrie, 24 - 35129 Padova (PD)\nP. IVA 05231470968 - C.F. 05231470968\nTel. 049 8203941 - info@elettroimpiantiverdi.it\nwww.elettroimpiantiverdi.it\n\nProgettazione\nInstallazione\nManutenzione\nImpianti fotovoltaici\nDomotica\n\nFATTURA\n\nNumero\nFAT-2025-0147\n\nData\n12/03/2025\n\nCodice cliente\nCLI-0089\n\nModalità di pagamento\nBonifico bancario 30 gg df\n\nFornitore\nElettroimpianti Verdi S.r.l.\nVia delle Industrie, 24\n35129 Padova (PD)\nP. IVA 05231470968\nC.F. 05231470968\n\nCliente\nEdilizia Rossi S.p.A.\nVia Roma, 112\n36077 Altavilla Vicentina (VI)\nP. IVA 04128730245\nC.F. 04128730245\n\nDescrizione                         Q.tà    Prezzo unitario    Importo      IVA\nQuadro elettrico di distribuzione 24 moduli     2       € 180,00          € 360,00    22%\nInterruttore magnetotermico differenziale       6       € 45,00           € 270,00    22%\nCavo FG16 3x2,5 mm² (rotolo 100 m)              3       € 95,00           € 285,00    22%\nInstallazione e collaudo impianto                 1       € 600,00          € 600,00    22%\nSopralluogo tecnico                               1       € 120,00          € 120,00    22%\n\nImponibile                                      € 1.635,00\nIVA 22%                                         € 359,70\n\nTotale documento                               € 1.994,70\n\nNote\nGrazie per aver scelto Elettroimpianti Verdi S.r.l.\nPer qualsiasi chiarimento, non esitate a contattarci.\n\nSoluzioni elettriche per un futuro più sostenibile.\n\nCoordinate bancarie\nIntesa Sanpaolo S.p.A.\nIBAN: IT60 X030 6912 3456 7890 1234 567\nBIC: BCITITMM"
+      ],
+      "risposta": "Le consulenze ricevute sono le seguenti:\n\n1. Consulenza organizzativa luglio da Delta Consulting SRL, fattura n. 2026/046 del 2026-07-20.\n2. Consulenza strategica, analisi requisiti e definizione architettura per il progetto sito web aziendale da Officina Digitale S.r.l., fattura n. FAT/2025/0048 del 2025-04-14.\n3. Consulenza strategica, piano editoriale e linee guida comunicazione da Studio Creativo Bianchi, fattura n. FAT-2025-014 del 2025-03-12.\n\nNon ci sono altre consulenze menzionate nei brani forniti.",
+      "traccia": null,
+      "ricerca": {
+        "hit": 1.0,
+        "recall": 1.0,
+        "mrr": 1.0
+      },
+      "ragas": {
+        "llm_context_precision_with_reference": 0.0,
+        "context_recall": 1.0,
+        "faithfulness": 1.0,
+        "factual_correctness": 0.33,
+        "answer_relevancy": 0.772
+      }
+    },
+    {
+      "domanda": "Chi si occupa delle pulizie degli uffici?",
+      "riferimento": "ETA PULIZIE SRL: pulizie uffici di settembre, 1.500,00 euro, fattura 2026/060 del 14/09/2026.",
+      "attese": [
+        "F0008"
+      ],
+      "trovate": [
+        "F0008",
+        "F0010",
+        "F0011",
+        "F0012"
+      ],
+      "brani": [
+        "[F0008 | ETA PULIZIE SRL | fattura n. 2026/060 del 2026-09-14]\nETA PULIZIE SRL\nP. IVA 07890123456   -   Servizi di pulizia professionale\nFattura n.\n2026/060\nData emissione\n2026-09-14\nScadenza\n2026-10-14\nCliente\nImpresa Cliente SRL\nPrestazione\nPulizie uffici settembre\n1.500,00 €\nImponibile\n1.500,00 €\nIVA (0%)\n0,00 €\nTotale documento\n1.500,00 €\nRegime IVA: Reverse charge art. 17 c.6: IVA a carico del committente, da verificare\nInversione contabile ex art. 17, c.6 DPR 633/72 - IVA assolta dal committente.\n",
+        "[F0010 | Officina Digitale S.r.l. | fattura n. FAT/2025/0048 del 2025-04-14]\nOfficina Digitale S.r.l.\nSOLUZIONI PER IL TUO BUSINESS\n\nVia delle Idee, 12\n40125 Bologna (BO)\nP.IVA 12345678901\nC.F. 12345678901\ninfo@officinadigitale.it\nwww.officinadigitale.it\n\nCliente\nVerdeCasa S.n.c.\nVia dei Tigli, 8\n20122 Milano (MI)\nP.IVA 98765432109\nC.F. 98765432109\n\nIDEE\nTECNOLOGIA\nPERSONE\n\nFATTURA\n\nNumero fattura\nFAT/2025/0048\n\nData emissione\n14/04/2025\n\nData scadenza\n14/05/2025\n\nCondizioni di pagamento\nBonifico bancario 30 gg\n\nOggetto\nFornitura servizi di consulenza e sviluppo\nper il progetto sito web aziendale\n\nDescrizione                Q.tà    Prezzo unitario    Importo\nConsulenza strategica\nAnalisi requisiti e definizione architettura       8       € 75,00           € 600,00\n\nSviluppo sito web\nRealizzazione e personalizzazione tema             40      € 65,00           € 2.600,00\n\nIntegrazione CMS\nConfigurazione e test                               8       € 60,00           € 480,00\n\nFormazione\nSessione formativa per il team cliente             4       € 70,00           € 280,00\n\nSubtotale                                                        € 3.960,00\n\nIVA 22%                                                         € 871,20\n\nTotale                                                         € 4.831,20\n\nCoordinate bancarie\nBanca: BPER Banca S.p.A.\nIBAN: IT32 X053 8702 4010 0000 1234 567\nIntestatario: Officina Digitale S.r.l.\n\nGrazie per la fiducia!\n\nCostruiamo\ninsieme il digitale\ndi domani.",
+        "[F0011 | Studio Creativo Bianchi | fattura n. FAT-2025-014 del 2025-03-12]\nStudio Creativo Bianchi\nIDEE. PROGETTI. COMUNICAZIONE.\n\nVia delle Arti, 12\n40126 Bologna (BO)\nP.IVA 03876541203\ninfo@studiocreativobianchi.it\nwww.studiocreativobianchi.it\n\nFATTURA\n\nNumero\nFAT-2025-014\n\nData emissione\n12/03/2025\n\nData scadenza\n11/04/2025\n\nCliente\n\nVerdeVivo S.r.l.\nVia Nazionale, 45\n50123 Firenze (FI)\nP.IVA 06123450987\n\nDescrizione\n\nQtà\n\nPrezzo unitario\n\nImporto\n\nProgettazione grafica campagna social\nConcept, layout e adattamenti formati\n\n1\n\n€ 800,00\n\n€ 800,00\n\nRealizzazione contenuti visivi\nFotografie e post-produzione\n\n1\n\n€ 600,00\n\n€ 600,00\n\nConsulenza strategica\nPiano editoriale e linee guida comunicazione\n\n1\n\n€ 400,00\n\n€ 400,00\n\nImponibile\n\n€ 1.800,00\n\nIVA 22%\n\n€ 396,00\n\nTotale\n\n€ 2.196,00\n\nModalità di pagamento\n\nBonifico bancario\nIBAN: IT60 X030 6902 4010 0000 0123 456\nIntestato a: Studio Creativo Bianchi\nCausale: FAT-2025-014\n\nGrazie per la fiducia!\n\nCreatività\nfa la differenza.",
+        "[F0012 | Elettroimpianti Verdi S.r.l. | fattura n. FAT-2025-0147 del 2025-03-12]\nElettroimpianti Verdi S.r.l.\nImpianti elettrici civili e industriali\nEfficienza oggi, energia per domani\n\nVia delle Industrie, 24 - 35129 Padova (PD)\nP. IVA 05231470968 - C.F. 05231470968\nTel. 049 8203941 - info@elettroimpiantiverdi.it\nwww.elettroimpiantiverdi.it\n\nProgettazione\nInstallazione\nManutenzione\nImpianti fotovoltaici\nDomotica\n\nFATTURA\n\nNumero\nFAT-2025-0147\n\nData\n12/03/2025\n\nCodice cliente\nCLI-0089\n\nModalità di pagamento\nBonifico bancario 30 gg df\n\nFornitore\nElettroimpianti Verdi S.r.l.\nVia delle Industrie, 24\n35129 Padova (PD)\nP. IVA 05231470968\nC.F. 05231470968\n\nCliente\nEdilizia Rossi S.p.A.\nVia Roma, 112\n36077 Altavilla Vicentina (VI)\nP. IVA 04128730245\nC.F. 04128730245\n\nDescrizione                         Q.tà    Prezzo unitario    Importo      IVA\nQuadro elettrico di distribuzione 24 moduli     2       € 180,00          € 360,00    22%\nInterruttore magnetotermico differenziale       6       € 45,00           € 270,00    22%\nCavo FG16 3x2,5 mm² (rotolo 100 m)              3       € 95,00           € 285,00    22%\nInstallazione e collaudo impianto                 1       € 600,00          € 600,00    22%\nSopralluogo tecnico                               1       € 120,00          € 120,00    22%\n\nImponibile                                      € 1.635,00\nIVA 22%                                         € 359,70\n\nTotale documento                               € 1.994,70\n\nNote\nGrazie per aver scelto Elettroimpianti Verdi S.r.l.\nPer qualsiasi chiarimento, non esitate a contattarci.\n\nSoluzioni elettriche per un futuro più sostenibile.\n\nCoordinate bancarie\nIntesa Sanpaolo S.p.A.\nIBAN: IT60 X030 6912 3456 7890 1234 567\nBIC: BCITITMM"
+      ],
+      "risposta": "Le pulizie degli uffici sono effettuate da ETA PULIZIE SRL, come indicato nella fattura n. 2026/060 del 2026-09-14.",
+      "traccia": null,
+      "ricerca": {
+        "hit": 1.0,
+        "recall": 1.0,
+        "mrr": 1.0
+      },
+      "ragas": {
+        "llm_context_precision_with_reference": 1.0,
+        "context_recall": 1.0,
+        "faithfulness": 1.0,
+        "factual_correctness": 0.86,
+        "answer_relevancy": 0.876
+      }
+    },
+    {
+      "domanda": "C'è una fattura in reverse charge?",
+      "riferimento": "Sì, la fattura 2026/060 di ETA PULIZIE SRL: inversione contabile ex art. 17 c.6 DPR 633/72, IVA 0 a carico del committente.",
+      "attese": [
+        "F0008"
+      ],
+      "trovate": [
+        "F0008",
+        "F0012",
+        "F0009",
+        "F0001"
+      ],
+      "brani": [
+        "[F0008 | ETA PULIZIE SRL | fattura n. 2026/060 del 2026-09-14]\nETA PULIZIE SRL\nP. IVA 07890123456   -   Servizi di pulizia professionale\nFattura n.\n2026/060\nData emissione\n2026-09-14\nScadenza\n2026-10-14\nCliente\nImpresa Cliente SRL\nPrestazione\nPulizie uffici settembre\n1.500,00 €\nImponibile\n1.500,00 €\nIVA (0%)\n0,00 €\nTotale documento\n1.500,00 €\nRegime IVA: Reverse charge art. 17 c.6: IVA a carico del committente, da verificare\nInversione contabile ex art. 17, c.6 DPR 633/72 - IVA assolta dal committente.\n",
+        "[F0012 | Elettroimpianti Verdi S.r.l. | fattura n. FAT-2025-0147 del 2025-03-12]\nElettroimpianti Verdi S.r.l.\nImpianti elettrici civili e industriali\nEfficienza oggi, energia per domani\n\nVia delle Industrie, 24 - 35129 Padova (PD)\nP. IVA 05231470968 - C.F. 05231470968\nTel. 049 8203941 - info@elettroimpiantiverdi.it\nwww.elettroimpiantiverdi.it\n\nProgettazione\nInstallazione\nManutenzione\nImpianti fotovoltaici\nDomotica\n\nFATTURA\n\nNumero\nFAT-2025-0147\n\nData\n12/03/2025\n\nCodice cliente\nCLI-0089\n\nModalità di pagamento\nBonifico bancario 30 gg df\n\nFornitore\nElettroimpianti Verdi S.r.l.\nVia delle Industrie, 24\n35129 Padova (PD)\nP. IVA 05231470968\nC.F. 05231470968\n\nCliente\nEdilizia Rossi S.p.A.\nVia Roma, 112\n36077 Altavilla Vicentina (VI)\nP. IVA 04128730245\nC.F. 04128730245\n\nDescrizione                         Q.tà    Prezzo unitario    Importo      IVA\nQuadro elettrico di distribuzione 24 moduli     2       € 180,00          € 360,00    22%\nInterruttore magnetotermico differenziale       6       € 45,00           € 270,00    22%\nCavo FG16 3x2,5 mm² (rotolo 100 m)              3       € 95,00           € 285,00    22%\nInstallazione e collaudo impianto                 1       € 600,00          € 600,00    22%\nSopralluogo tecnico                               1       € 120,00          € 120,00    22%\n\nImponibile                                      € 1.635,00\nIVA 22%                                         € 359,70\n\nTotale documento                               € 1.994,70\n\nNote\nGrazie per aver scelto Elettroimpianti Verdi S.r.l.\nPer qualsiasi chiarimento, non esitate a contattarci.\n\nSoluzioni elettriche per un futuro più sostenibile.\n\nCoordinate bancarie\nIntesa Sanpaolo S.p.A.\nIBAN: IT60 X030 6912 3456 7890 1234 567\nBIC: BCITITMM",
+        "[F0009 | Theta Ristorazione SRL | fattura n. 2026/062 del 2026-09-16]\nTheta Ristorazione SRL\nP. IVA 08901234567  -  Catering & Ristorazione\nFATTURA\nN. 2026/062\nEmessa il 2026-09-16\nScadenza 2026-10-16\nCliente\nImpresa Cliente SRL\nP. IVA 09999999999\nDescrizione\nQ.ta\nPrezzo\nImporto\nCatering evento aziendale\n1\n800,00 €\n800,00 €\nImponibile\n800,00 €\nIVA 10% (aliquota ridotta)\n80,00 €\nTOTALE\n880,00 €\nNota IVA: Aliquota ridotta 10% (somministrazione): non ordinaria, da verificare\n",
+        "[F0001 | Alfa Forniture SRL | fattura n. 2026/037 del 2026-06-10]\nAlfa Forniture SRL\nP. IVA 01234567890\nVia delle Industrie 12, 70100 Bari (BA)\nFATTURA\n N. 2026/037\nData 2026-06-10\nDestinatario\nImpresa Cliente SRL  -  P. IVA 09999999999\nCorso Italia 1, 70121 Bari (BA)\nDescrizione\nQ.ta\nPrezzo\nImporto\nCarta A4 risme\n60\n12,00 €\n720,00 €\nToner compatibili\n8\n60,00 €\n480,00 €\nImponibile\n1.200,00 €\nIVA 22%\n264,00 €\nTOTALE\n1.464,00 €\nScadenza pagamento: 2026-07-10\nModalita: bonifico bancario IBAN IT00 A000 0000 0000 0000 0000 000\n"
+      ],
+      "risposta": "Sì, c'è una fattura in reverse charge. È la fattura n. 2026/060 del 2026-09-14 emessa da ETA PULIZIE SRL. Nel dettaglio, il regime IVA è indicato come \"Reverse charge art. 17 c.6: IVA a carico del committente\" con inversione contabile ex art. 17, c.6 DPR 633/72 - IVA assolta dal committente.",
+      "traccia": null,
+      "ricerca": {
+        "hit": 1.0,
+        "recall": 1.0,
+        "mrr": 1.0
+      },
+      "ragas": {
+        "llm_context_precision_with_reference": 1.0,
+        "context_recall": 1.0,
+        "faithfulness": 1.0,
+        "factual_correctness": 0.86,
+        "answer_relevancy": 0.735
+      }
+    },
+    {
+      "domanda": "Per quale servizio abbiamo pagato l'IVA al 10%?",
+      "riferimento": "Per il catering di un evento aziendale di Theta Ristorazione SRL (fattura 2026/062): 800,00 euro più IVA ridotta al 10%, totale 880,00 euro.",
+      "attese": [
+        "F0009"
+      ],
+      "trovate": [
+        "F0008",
+        "F0009",
+        "F0010",
+        "F0015"
+      ],
+      "brani": [
+        "[F0008 | ETA PULIZIE SRL | fattura n. 2026/060 del 2026-09-14]\nETA PULIZIE SRL\nP. IVA 07890123456   -   Servizi di pulizia professionale\nFattura n.\n2026/060\nData emissione\n2026-09-14\nScadenza\n2026-10-14\nCliente\nImpresa Cliente SRL\nPrestazione\nPulizie uffici settembre\n1.500,00 €\nImponibile\n1.500,00 €\nIVA (0%)\n0,00 €\nTotale documento\n1.500,00 €\nRegime IVA: Reverse charge art. 17 c.6: IVA a carico del committente, da verificare\nInversione contabile ex art. 17, c.6 DPR 633/72 - IVA assolta dal committente.\n",
+        "[F0009 | Theta Ristorazione SRL | fattura n. 2026/062 del 2026-09-16]\nTheta Ristorazione SRL\nP. IVA 08901234567  -  Catering & Ristorazione\nFATTURA\nN. 2026/062\nEmessa il 2026-09-16\nScadenza 2026-10-16\nCliente\nImpresa Cliente SRL\nP. IVA 09999999999\nDescrizione\nQ.ta\nPrezzo\nImporto\nCatering evento aziendale\n1\n800,00 €\n800,00 €\nImponibile\n800,00 €\nIVA 10% (aliquota ridotta)\n80,00 €\nTOTALE\n880,00 €\nNota IVA: Aliquota ridotta 10% (somministrazione): non ordinaria, da verificare\n",
+        "[F0010 | Officina Digitale S.r.l. | fattura n. FAT/2025/0048 del 2025-04-14]\nOfficina Digitale S.r.l.\nSOLUZIONI PER IL TUO BUSINESS\n\nVia delle Idee, 12\n40125 Bologna (BO)\nP.IVA 12345678901\nC.F. 12345678901\ninfo@officinadigitale.it\nwww.officinadigitale.it\n\nCliente\nVerdeCasa S.n.c.\nVia dei Tigli, 8\n20122 Milano (MI)\nP.IVA 98765432109\nC.F. 98765432109\n\nIDEE\nTECNOLOGIA\nPERSONE\n\nFATTURA\n\nNumero fattura\nFAT/2025/0048\n\nData emissione\n14/04/2025\n\nData scadenza\n14/05/2025\n\nCondizioni di pagamento\nBonifico bancario 30 gg\n\nOggetto\nFornitura servizi di consulenza e sviluppo\nper il progetto sito web aziendale\n\nDescrizione                Q.tà    Prezzo unitario    Importo\nConsulenza strategica\nAnalisi requisiti e definizione architettura       8       € 75,00           € 600,00\n\nSviluppo sito web\nRealizzazione e personalizzazione tema             40      € 65,00           € 2.600,00\n\nIntegrazione CMS\nConfigurazione e test                               8       € 60,00           € 480,00\n\nFormazione\nSessione formativa per il team cliente             4       € 70,00           € 280,00\n\nSubtotale                                                        € 3.960,00\n\nIVA 22%                                                         € 871,20\n\nTotale                                                         € 4.831,20\n\nCoordinate bancarie\nBanca: BPER Banca S.p.A.\nIBAN: IT32 X053 8702 4010 0000 1234 567\nIntestatario: Officina Digitale S.r.l.\n\nGrazie per la fiducia!\n\nCostruiamo\ninsieme il digitale\ndi domani.",
+        "[F0015 | Cartoleria Bianchi SRL | fattura n. 45 del 2026-09-24]\nFattura della Cartoleria Bianchi S.r.l., partita IVA 01122334455, numero 45 del 24 settembre 2026, scadenza 24 ottobre 2026, imponibile 200 euro, IVA 44 euro, totale 244 euro."
+      ],
+      "risposta": "Abbiamo pagato l'IVA al 10% per il servizio di catering evento aziendale fornito da Theta Ristorazione SRL, come indicato nella fattura n. 2026/062 del 2026-09-16.",
+      "traccia": null,
+      "ricerca": {
+        "hit": 1.0,
+        "recall": 1.0,
+        "mrr": 0.5
+      },
+      "ragas": {
+        "llm_context_precision_with_reference": 0.5,
+        "context_recall": 1.0,
+        "faithfulness": 0.333,
+        "factual_correctness": 0.67,
+        "answer_relevancy": 0.641
+      }
+    },
+    {
+      "domanda": "Quanto abbiamo pagato per le licenze SaaS del quarto trimestre?",
+      "riferimento": "Gamma Software Srl, fattura 2026/058: 5 licenze SaaS Q4 a 640,00 euro, imponibile 3.200,00 euro, totale 3.904,00 euro con IVA.",
+      "attese": [
+        "F0007"
+      ],
+      "trovate": [
+        "F0007",
+        "F0003",
+        "F0010",
+        "F0008"
+      ],
+      "brani": [
+        "[F0007 | Gamma Software Srl | fattura n. 2026/058 del 2026-09-12]\nGamma Software Srl\nP. IVA 03456789012\nViale della Tecnica 88, 00144 Roma (RM)\nFATTURA\n N. 2026/058\nData 2026-09-12\nDestinatario\nImpresa Cliente SRL  -  P. IVA 09999999999\nCorso Italia 1, 70121 Bari (BA)\nDescrizione\nQ.ta\nPrezzo\nImporto\nLicenze SaaS Q4\n5\n640,00 €\n3.200,00 €\nImponibile\n3.200,00 €\nIVA 22%\n704,00 €\nTOTALE\n3.904,00 €\nScadenza pagamento: 2026-10-12\nModalita: bonifico bancario IBAN IT00 A000 0000 0000 0000 0000 000\n",
+        "[F0003 | Gamma Software Srl | fattura n. 2026/041 del 2026-07-01]\nGamma Software Srl\nP. IVA 03456789012\nViale della Tecnica 88, 00144 Roma (RM)\nFATTURA\n N. 2026/041\nData 2026-07-01\nDestinatario\nImpresa Cliente SRL  -  P. IVA 09999999999\nCorso Italia 1, 70121 Bari (BA)\nDescrizione\nQ.ta\nPrezzo\nImporto\nLicenze SaaS Q3\n5\n500,00 €\n2.500,00 €\nImponibile\n2.500,00 €\nIVA 22%\n550,00 €\nTOTALE\n3.050,00 €\nScadenza pagamento: 2026-07-31\nModalita: bonifico bancario IBAN IT00 A000 0000 0000 0000 0000 000\n",
+        "[F0010 | Officina Digitale S.r.l. | fattura n. FAT/2025/0048 del 2025-04-14]\nOfficina Digitale S.r.l.\nSOLUZIONI PER IL TUO BUSINESS\n\nVia delle Idee, 12\n40125 Bologna (BO)\nP.IVA 12345678901\nC.F. 12345678901\ninfo@officinadigitale.it\nwww.officinadigitale.it\n\nCliente\nVerdeCasa S.n.c.\nVia dei Tigli, 8\n20122 Milano (MI)\nP.IVA 98765432109\nC.F. 98765432109\n\nIDEE\nTECNOLOGIA\nPERSONE\n\nFATTURA\n\nNumero fattura\nFAT/2025/0048\n\nData emissione\n14/04/2025\n\nData scadenza\n14/05/2025\n\nCondizioni di pagamento\nBonifico bancario 30 gg\n\nOggetto\nFornitura servizi di consulenza e sviluppo\nper il progetto sito web aziendale\n\nDescrizione                Q.tà    Prezzo unitario    Importo\nConsulenza strategica\nAnalisi requisiti e definizione architettura       8       € 75,00           € 600,00\n\nSviluppo sito web\nRealizzazione e personalizzazione tema             40      € 65,00           € 2.600,00\n\nIntegrazione CMS\nConfigurazione e test                               8       € 60,00           € 480,00\n\nFormazione\nSessione formativa per il team cliente             4       € 70,00           € 280,00\n\nSubtotale                                                        € 3.960,00\n\nIVA 22%                                                         € 871,20\n\nTotale                                                         € 4.831,20\n\nCoordinate bancarie\nBanca: BPER Banca S.p.A.\nIBAN: IT32 X053 8702 4010 0000 1234 567\nIntestatario: Officina Digitale S.r.l.\n\nGrazie per la fiducia!\n\nCostruiamo\ninsieme il digitale\ndi domani.",
+        "[F0008 | ETA PULIZIE SRL | fattura n. 2026/060 del 2026-09-14]\nETA PULIZIE SRL\nP. IVA 07890123456   -   Servizi di pulizia professionale\nFattura n.\n2026/060\nData emissione\n2026-09-14\nScadenza\n2026-10-14\nCliente\nImpresa Cliente SRL\nPrestazione\nPulizie uffici settembre\n1.500,00 €\nImponibile\n1.500,00 €\nIVA (0%)\n0,00 €\nTotale documento\n1.500,00 €\nRegime IVA: Reverse charge art. 17 c.6: IVA a carico del committente, da verificare\nInversione contabile ex art. 17, c.6 DPR 633/72 - IVA assolta dal committente.\n"
+      ],
+      "risposta": "Abbiamo pagato per le licenze SaaS del quarto trimestre la somma totale di 3.904,00 € (IVA inclusa), come indicato nella fattura n. 2026/058 del 2026-09-12 emessa da Gamma Software Srl.",
+      "traccia": null,
+      "ricerca": {
+        "hit": 1.0,
+        "recall": 1.0,
+        "mrr": 1.0
+      },
+      "ragas": {
+        "llm_context_precision_with_reference": 1.0,
+        "context_recall": 1.0,
+        "faithfulness": 1.0,
+        "factual_correctness": 0.44,
+        "answer_relevancy": 0.991
+      }
+    },
+    {
+      "domanda": "Quanto costava una licenza SaaS nel terzo trimestre?",
+      "riferimento": "500,00 euro a licenza (5 licenze SaaS Q3, 2.500,00 euro), fattura 2026/041 di Gamma Software Srl.",
+      "attese": [
+        "F0003"
+      ],
+      "trovate": [
+        "F0003",
+        "F0007",
+        "F0010",
+        "F0005"
+      ],
+      "brani": [
+        "[F0003 | Gamma Software Srl | fattura n. 2026/041 del 2026-07-01]\nGamma Software Srl\nP. IVA 03456789012\nViale della Tecnica 88, 00144 Roma (RM)\nFATTURA\n N. 2026/041\nData 2026-07-01\nDestinatario\nImpresa Cliente SRL  -  P. IVA 09999999999\nCorso Italia 1, 70121 Bari (BA)\nDescrizione\nQ.ta\nPrezzo\nImporto\nLicenze SaaS Q3\n5\n500,00 €\n2.500,00 €\nImponibile\n2.500,00 €\nIVA 22%\n550,00 €\nTOTALE\n3.050,00 €\nScadenza pagamento: 2026-07-31\nModalita: bonifico bancario IBAN IT00 A000 0000 0000 0000 0000 000\n",
+        "[F0007 | Gamma Software Srl | fattura n. 2026/058 del 2026-09-12]\nGamma Software Srl\nP. IVA 03456789012\nViale della Tecnica 88, 00144 Roma (RM)\nFATTURA\n N. 2026/058\nData 2026-09-12\nDestinatario\nImpresa Cliente SRL  -  P. IVA 09999999999\nCorso Italia 1, 70121 Bari (BA)\nDescrizione\nQ.ta\nPrezzo\nImporto\nLicenze SaaS Q4\n5\n640,00 €\n3.200,00 €\nImponibile\n3.200,00 €\nIVA 22%\n704,00 €\nTOTALE\n3.904,00 €\nScadenza pagamento: 2026-10-12\nModalita: bonifico bancario IBAN IT00 A000 0000 0000 0000 0000 000\n",
+        "[F0010 | Officina Digitale S.r.l. | fattura n. FAT/2025/0048 del 2025-04-14]\nOfficina Digitale S.r.l.\nSOLUZIONI PER IL TUO BUSINESS\n\nVia delle Idee, 12\n40125 Bologna (BO)\nP.IVA 12345678901\nC.F. 12345678901\ninfo@officinadigitale.it\nwww.officinadigitale.it\n\nCliente\nVerdeCasa S.n.c.\nVia dei Tigli, 8\n20122 Milano (MI)\nP.IVA 98765432109\nC.F. 98765432109\n\nIDEE\nTECNOLOGIA\nPERSONE\n\nFATTURA\n\nNumero fattura\nFAT/2025/0048\n\nData emissione\n14/04/2025\n\nData scadenza\n14/05/2025\n\nCondizioni di pagamento\nBonifico bancario 30 gg\n\nOggetto\nFornitura servizi di consulenza e sviluppo\nper il progetto sito web aziendale\n\nDescrizione                Q.tà    Prezzo unitario    Importo\nConsulenza strategica\nAnalisi requisiti e definizione architettura       8       € 75,00           € 600,00\n\nSviluppo sito web\nRealizzazione e personalizzazione tema             40      € 65,00           € 2.600,00\n\nIntegrazione CMS\nConfigurazione e test                               8       € 60,00           € 480,00\n\nFormazione\nSessione formativa per il team cliente             4       € 70,00           € 280,00\n\nSubtotale                                                        € 3.960,00\n\nIVA 22%                                                         € 871,20\n\nTotale                                                         € 4.831,20\n\nCoordinate bancarie\nBanca: BPER Banca S.p.A.\nIBAN: IT32 X053 8702 4010 0000 1234 567\nIntestatario: Officina Digitale S.r.l.\n\nGrazie per la fiducia!\n\nCostruiamo\ninsieme il digitale\ndi domani.",
+        "[F0005 | Delta Consulting SRL | fattura n. 2026/046 del 2026-07-20]\nDelta Consulting SRL\nP. IVA 04567890123\nCorso Vittorio Emanuele 40, 20122 Milano (MI)\nFATTURA\n N. 2026/046\nData 2026-07-20\nDestinatario\nImpresa Cliente SRL  -  P. IVA 09999999999\nCorso Italia 1, 70121 Bari (BA)\nDescrizione\nQ.ta\nPrezzo\nImporto\nConsulenza organizzativa luglio\n25\n200,00 €\n5.000,00 €\nImponibile\n5.000,00 €\nIVA 22%\n1.100,00 €\nTOTALE\n6.100,00 €\nScadenza pagamento: 2026-09-18\nModalita: bonifico bancario IBAN IT00 A000 0000 0000 0000 0000 000\n"
+      ],
+      "risposta": "Nel terzo trimestre, una licenza SaaS costava 500,00 € ciascuna, come indicato nella fattura n. 2026/041 del 2026-07-01 emessa da Gamma Software Srl.",
+      "traccia": null,
+      "ricerca": {
+        "hit": 1.0,
+        "recall": 1.0,
+        "mrr": 1.0
+      },
+      "ragas": {
+        "llm_context_precision_with_reference": 1.0,
+        "context_recall": 1.0,
+        "faithfulness": 1.0,
+        "factual_correctness": 0.57,
+        "answer_relevancy": 0.967
+      }
+    },
+    {
+      "domanda": "Chi ha installato il quadro elettrico?",
+      "riferimento": "Elettroimpianti Verdi S.r.l., fattura FAT-2025-0147: 2 quadri elettrici di distribuzione 24 moduli (360,00 euro) e installazione e collaudo dell'impianto (600,00 euro).",
+      "attese": [
+        "F0012"
+      ],
+      "trovate": [
+        "F0012",
+        "F0006",
+        "F0010",
+        "F0011"
+      ],
+      "brani": [
+        "[F0012 | Elettroimpianti Verdi S.r.l. | fattura n. FAT-2025-0147 del 2025-03-12]\nElettroimpianti Verdi S.r.l.\nImpianti elettrici civili e industriali\nEfficienza oggi, energia per domani\n\nVia delle Industrie, 24 - 35129 Padova (PD)\nP. IVA 05231470968 - C.F. 05231470968\nTel. 049 8203941 - info@elettroimpiantiverdi.it\nwww.elettroimpiantiverdi.it\n\nProgettazione\nInstallazione\nManutenzione\nImpianti fotovoltaici\nDomotica\n\nFATTURA\n\nNumero\nFAT-2025-0147\n\nData\n12/03/2025\n\nCodice cliente\nCLI-0089\n\nModalità di pagamento\nBonifico bancario 30 gg df\n\nFornitore\nElettroimpianti Verdi S.r.l.\nVia delle Industrie, 24\n35129 Padova (PD)\nP. IVA 05231470968\nC.F. 05231470968\n\nCliente\nEdilizia Rossi S.p.A.\nVia Roma, 112\n36077 Altavilla Vicentina (VI)\nP. IVA 04128730245\nC.F. 04128730245\n\nDescrizione                         Q.tà    Prezzo unitario    Importo      IVA\nQuadro elettrico di distribuzione 24 moduli     2       € 180,00          € 360,00    22%\nInterruttore magnetotermico differenziale       6       € 45,00           € 270,00    22%\nCavo FG16 3x2,5 mm² (rotolo 100 m)              3       € 95,00           € 285,00    22%\nInstallazione e collaudo impianto                 1       € 600,00          € 600,00    22%\nSopralluogo tecnico                               1       € 120,00          € 120,00    22%\n\nImponibile                                      € 1.635,00\nIVA 22%                                         € 359,70\n\nTotale documento                               € 1.994,70\n\nNote\nGrazie per aver scelto Elettroimpianti Verdi S.r.l.\nPer qualsiasi chiarimento, non esitate a contattarci.\n\nSoluzioni elettriche per un futuro più sostenibile.\n\nCoordinate bancarie\nIntesa Sanpaolo S.p.A.\nIBAN: IT60 X030 6912 3456 7890 1234 567\nBIC: BCITITMM",
+        "[F0006 | Epsilon Energia SpA | fattura n. 2026/056 del 2026-09-05]\nEpsilon Energia SpA\nP. IVA 05678901234\nVia dell'Energia 3, 35100 Padova (PD)\nFATTURA\n N. 2026/056\nData 2026-09-05\nDestinatario\nImpresa Cliente SRL  -  P. IVA 09999999999\nCorso Italia 1, 70121 Bari (BA)\nDescrizione\nQ.ta\nPrezzo\nImporto\nFornitura energia agosto\n1\n720,00 €\n720,00 €\nImponibile\n720,00 €\nIVA 22%\n158,40 €\nTOTALE\n878,40 €\nScadenza pagamento: 2026-11-04\nModalita: bonifico bancario IBAN IT00 A000 0000 0000 0000 0000 000\n",
+        "[F0010 | Officina Digitale S.r.l. | fattura n. FAT/2025/0048 del 2025-04-14]\nOfficina Digitale S.r.l.\nSOLUZIONI PER IL TUO BUSINESS\n\nVia delle Idee, 12\n40125 Bologna (BO)\nP.IVA 12345678901\nC.F. 12345678901\ninfo@officinadigitale.it\nwww.officinadigitale.it\n\nCliente\nVerdeCasa S.n.c.\nVia dei Tigli, 8\n20122 Milano (MI)\nP.IVA 98765432109\nC.F. 98765432109\n\nIDEE\nTECNOLOGIA\nPERSONE\n\nFATTURA\n\nNumero fattura\nFAT/2025/0048\n\nData emissione\n14/04/2025\n\nData scadenza\n14/05/2025\n\nCondizioni di pagamento\nBonifico bancario 30 gg\n\nOggetto\nFornitura servizi di consulenza e sviluppo\nper il progetto sito web aziendale\n\nDescrizione                Q.tà    Prezzo unitario    Importo\nConsulenza strategica\nAnalisi requisiti e definizione architettura       8       € 75,00           € 600,00\n\nSviluppo sito web\nRealizzazione e personalizzazione tema             40      € 65,00           € 2.600,00\n\nIntegrazione CMS\nConfigurazione e test                               8       € 60,00           € 480,00\n\nFormazione\nSessione formativa per il team cliente             4       € 70,00           € 280,00\n\nSubtotale                                                        € 3.960,00\n\nIVA 22%                                                         € 871,20\n\nTotale                                                         € 4.831,20\n\nCoordinate bancarie\nBanca: BPER Banca S.p.A.\nIBAN: IT32 X053 8702 4010 0000 1234 567\nIntestatario: Officina Digitale S.r.l.\n\nGrazie per la fiducia!\n\nCostruiamo\ninsieme il digitale\ndi domani.",
+        "[F0011 | Studio Creativo Bianchi | fattura n. FAT-2025-014 del 2025-03-12]\nStudio Creativo Bianchi\nIDEE. PROGETTI. COMUNICAZIONE.\n\nVia delle Arti, 12\n40126 Bologna (BO)\nP.IVA 03876541203\ninfo@studiocreativobianchi.it\nwww.studiocreativobianchi.it\n\nFATTURA\n\nNumero\nFAT-2025-014\n\nData emissione\n12/03/2025\n\nData scadenza\n11/04/2025\n\nCliente\n\nVerdeVivo S.r.l.\nVia Nazionale, 45\n50123 Firenze (FI)\nP.IVA 06123450987\n\nDescrizione\n\nQtà\n\nPrezzo unitario\n\nImporto\n\nProgettazione grafica campagna social\nConcept, layout e adattamenti formati\n\n1\n\n€ 800,00\n\n€ 800,00\n\nRealizzazione contenuti visivi\nFotografie e post-produzione\n\n1\n\n€ 600,00\n\n€ 600,00\n\nConsulenza strategica\nPiano editoriale e linee guida comunicazione\n\n1\n\n€ 400,00\n\n€ 400,00\n\nImponibile\n\n€ 1.800,00\n\nIVA 22%\n\n€ 396,00\n\nTotale\n\n€ 2.196,00\n\nModalità di pagamento\n\nBonifico bancario\nIBAN: IT60 X030 6902 4010 0000 0123 456\nIntestato a: Studio Creativo Bianchi\nCausale: FAT-2025-014\n\nGrazie per la fiducia!\n\nCreatività\nfa la differenza."
+      ],
+      "risposta": "Il quadro elettrico è stato installato da Elettroimpianti Verdi S.r.l., come indicato nella fattura n. FAT-2025-0147 del 12/03/2025.",
+      "traccia": null,
+      "ricerca": {
+        "hit": 1.0,
+        "recall": 1.0,
+        "mrr": 1.0
+      },
+      "ragas": {
+        "llm_context_precision_with_reference": 1.0,
+        "context_recall": 1.0,
+        "faithfulness": 1.0,
+        "factual_correctness": 0.44,
+        "answer_relevancy": 0.886
+      }
+    },
+    {
+      "domanda": "Quanto cavo FG16 è stato fatturato?",
+      "riferimento": "3 rotoli da 100 metri di cavo FG16 3x2,5 mm², a 95,00 euro l'uno (285,00 euro), da Elettroimpianti Verdi S.r.l.",
+      "attese": [
+        "F0012"
+      ],
+      "trovate": [
+        "F0007",
+        "F0003",
+        "F0012",
+        "F0004"
+      ],
+      "brani": [
+        "[F0007 | Gamma Software Srl | fattura n. 2026/058 del 2026-09-12]\nGamma Software Srl\nP. IVA 03456789012\nViale della Tecnica 88, 00144 Roma (RM)\nFATTURA\n N. 2026/058\nData 2026-09-12\nDestinatario\nImpresa Cliente SRL  -  P. IVA 09999999999\nCorso Italia 1, 70121 Bari (BA)\nDescrizione\nQ.ta\nPrezzo\nImporto\nLicenze SaaS Q4\n5\n640,00 €\n3.200,00 €\nImponibile\n3.200,00 €\nIVA 22%\n704,00 €\nTOTALE\n3.904,00 €\nScadenza pagamento: 2026-10-12\nModalita: bonifico bancario IBAN IT00 A000 0000 0000 0000 0000 000\n",
+        "[F0003 | Gamma Software Srl | fattura n. 2026/041 del 2026-07-01]\nGamma Software Srl\nP. IVA 03456789012\nViale della Tecnica 88, 00144 Roma (RM)\nFATTURA\n N. 2026/041\nData 2026-07-01\nDestinatario\nImpresa Cliente SRL  -  P. IVA 09999999999\nCorso Italia 1, 70121 Bari (BA)\nDescrizione\nQ.ta\nPrezzo\nImporto\nLicenze SaaS Q3\n5\n500,00 €\n2.500,00 €\nImponibile\n2.500,00 €\nIVA 22%\n550,00 €\nTOTALE\n3.050,00 €\nScadenza pagamento: 2026-07-31\nModalita: bonifico bancario IBAN IT00 A000 0000 0000 0000 0000 000\n",
+        "[F0012 | Elettroimpianti Verdi S.r.l. | fattura n. FAT-2025-0147 del 2025-03-12]\nElettroimpianti Verdi S.r.l.\nImpianti elettrici civili e industriali\nEfficienza oggi, energia per domani\n\nVia delle Industrie, 24 - 35129 Padova (PD)\nP. IVA 05231470968 - C.F. 05231470968\nTel. 049 8203941 - info@elettroimpiantiverdi.it\nwww.elettroimpiantiverdi.it\n\nProgettazione\nInstallazione\nManutenzione\nImpianti fotovoltaici\nDomotica\n\nFATTURA\n\nNumero\nFAT-2025-0147\n\nData\n12/03/2025\n\nCodice cliente\nCLI-0089\n\nModalità di pagamento\nBonifico bancario 30 gg df\n\nFornitore\nElettroimpianti Verdi S.r.l.\nVia delle Industrie, 24\n35129 Padova (PD)\nP. IVA 05231470968\nC.F. 05231470968\n\nCliente\nEdilizia Rossi S.p.A.\nVia Roma, 112\n36077 Altavilla Vicentina (VI)\nP. IVA 04128730245\nC.F. 04128730245\n\nDescrizione                         Q.tà    Prezzo unitario    Importo      IVA\nQuadro elettrico di distribuzione 24 moduli     2       € 180,00          € 360,00    22%\nInterruttore magnetotermico differenziale       6       € 45,00           € 270,00    22%\nCavo FG16 3x2,5 mm² (rotolo 100 m)              3       € 95,00           € 285,00    22%\nInstallazione e collaudo impianto                 1       € 600,00          € 600,00    22%\nSopralluogo tecnico                               1       € 120,00          € 120,00    22%\n\nImponibile                                      € 1.635,00\nIVA 22%                                         € 359,70\n\nTotale documento                               € 1.994,70\n\nNote\nGrazie per aver scelto Elettroimpianti Verdi S.r.l.\nPer qualsiasi chiarimento, non esitate a contattarci.\n\nSoluzioni elettriche per un futuro più sostenibile.\n\nCoordinate bancarie\nIntesa Sanpaolo S.p.A.\nIBAN: IT60 X030 6912 3456 7890 1234 567\nBIC: BCITITMM",
+        "[F0004 | Alfa Forniture SRL | fattura n. 2026/044 del 2026-07-05]\nAlfa Forniture SRL\nP. IVA 01234567890\nVia delle Industrie 12, 70100 Bari (BA)\nFATTURA\n N. 2026/044\nData 2026-07-05\nDestinatario\nImpresa Cliente SRL  -  P. IVA 09999999999\nCorso Italia 1, 70121 Bari (BA)\nDescrizione\nQ.ta\nPrezzo\nImporto\nCancelleria varia\n1\n800,00 €\n800,00 €\nImponibile\n800,00 €\nIVA 22%\n176,00 €\nTOTALE\n976,00 €\nScadenza pagamento: 2026-08-04\nModalita: bonifico bancario IBAN IT00 A000 0000 0000 0000 0000 000\n"
+      ],
+      "risposta": "Il cavo FG16 è stato fatturato da Elettroimpianti Verdi S.r.l. nella fattura n. FAT-2025-0147 del 2025-03-12, per una quantità di 3 rotoli da 100 metri ciascuno.",
+      "traccia": null,
+      "ricerca": {
+        "hit": 1.0,
+        "recall": 1.0,
+        "mrr": 0.3333333333333333
+      },
+      "ragas": {
+        "llm_context_precision_with_reference": 0.333,
+        "context_recall": 1.0,
+        "faithfulness": 1.0,
+        "factual_correctness": 0.55,
+        "answer_relevancy": 0.817
+      }
+    },
+    {
+      "domanda": "Chi ha curato la campagna social?",
+      "riferimento": "Studio Creativo Bianchi, fattura FAT-2025-014: progettazione grafica della campagna social (800,00 euro) e realizzazione dei contenuti visivi (600,00 euro).",
+      "attese": [
+        "F0011"
+      ],
+      "trovate": [
+        "F0011",
+        "F0010",
+        "F0012",
+        "F0005"
+      ],
+      "brani": [
+        "[F0011 | Studio Creativo Bianchi | fattura n. FAT-2025-014 del 2025-03-12]\nStudio Creativo Bianchi\nIDEE. PROGETTI. COMUNICAZIONE.\n\nVia delle Arti, 12\n40126 Bologna (BO)\nP.IVA 03876541203\ninfo@studiocreativobianchi.it\nwww.studiocreativobianchi.it\n\nFATTURA\n\nNumero\nFAT-2025-014\n\nData emissione\n12/03/2025\n\nData scadenza\n11/04/2025\n\nCliente\n\nVerdeVivo S.r.l.\nVia Nazionale, 45\n50123 Firenze (FI)\nP.IVA 06123450987\n\nDescrizione\n\nQtà\n\nPrezzo unitario\n\nImporto\n\nProgettazione grafica campagna social\nConcept, layout e adattamenti formati\n\n1\n\n€ 800,00\n\n€ 800,00\n\nRealizzazione contenuti visivi\nFotografie e post-produzione\n\n1\n\n€ 600,00\n\n€ 600,00\n\nConsulenza strategica\nPiano editoriale e linee guida comunicazione\n\n1\n\n€ 400,00\n\n€ 400,00\n\nImponibile\n\n€ 1.800,00\n\nIVA 22%\n\n€ 396,00\n\nTotale\n\n€ 2.196,00\n\nModalità di pagamento\n\nBonifico bancario\nIBAN: IT60 X030 6902 4010 0000 0123 456\nIntestato a: Studio Creativo Bianchi\nCausale: FAT-2025-014\n\nGrazie per la fiducia!\n\nCreatività\nfa la differenza.",
+        "[F0010 | Officina Digitale S.r.l. | fattura n. FAT/2025/0048 del 2025-04-14]\nOfficina Digitale S.r.l.\nSOLUZIONI PER IL TUO BUSINESS\n\nVia delle Idee, 12\n40125 Bologna (BO)\nP.IVA 12345678901\nC.F. 12345678901\ninfo@officinadigitale.it\nwww.officinadigitale.it\n\nCliente\nVerdeCasa S.n.c.\nVia dei Tigli, 8\n20122 Milano (MI)\nP.IVA 98765432109\nC.F. 98765432109\n\nIDEE\nTECNOLOGIA\nPERSONE\n\nFATTURA\n\nNumero fattura\nFAT/2025/0048\n\nData emissione\n14/04/2025\n\nData scadenza\n14/05/2025\n\nCondizioni di pagamento\nBonifico bancario 30 gg\n\nOggetto\nFornitura servizi di consulenza e sviluppo\nper il progetto sito web aziendale\n\nDescrizione                Q.tà    Prezzo unitario    Importo\nConsulenza strategica\nAnalisi requisiti e definizione architettura       8       € 75,00           € 600,00\n\nSviluppo sito web\nRealizzazione e personalizzazione tema             40      € 65,00           € 2.600,00\n\nIntegrazione CMS\nConfigurazione e test                               8       € 60,00           € 480,00\n\nFormazione\nSessione formativa per il team cliente             4       € 70,00           € 280,00\n\nSubtotale                                                        € 3.960,00\n\nIVA 22%                                                         € 871,20\n\nTotale                                                         € 4.831,20\n\nCoordinate bancarie\nBanca: BPER Banca S.p.A.\nIBAN: IT32 X053 8702 4010 0000 1234 567\nIntestatario: Officina Digitale S.r.l.\n\nGrazie per la fiducia!\n\nCostruiamo\ninsieme il digitale\ndi domani.",
+        "[F0012 | Elettroimpianti Verdi S.r.l. | fattura n. FAT-2025-0147 del 2025-03-12]\nElettroimpianti Verdi S.r.l.\nImpianti elettrici civili e industriali\nEfficienza oggi, energia per domani\n\nVia delle Industrie, 24 - 35129 Padova (PD)\nP. IVA 05231470968 - C.F. 05231470968\nTel. 049 8203941 - info@elettroimpiantiverdi.it\nwww.elettroimpiantiverdi.it\n\nProgettazione\nInstallazione\nManutenzione\nImpianti fotovoltaici\nDomotica\n\nFATTURA\n\nNumero\nFAT-2025-0147\n\nData\n12/03/2025\n\nCodice cliente\nCLI-0089\n\nModalità di pagamento\nBonifico bancario 30 gg df\n\nFornitore\nElettroimpianti Verdi S.r.l.\nVia delle Industrie, 24\n35129 Padova (PD)\nP. IVA 05231470968\nC.F. 05231470968\n\nCliente\nEdilizia Rossi S.p.A.\nVia Roma, 112\n36077 Altavilla Vicentina (VI)\nP. IVA 04128730245\nC.F. 04128730245\n\nDescrizione                         Q.tà    Prezzo unitario    Importo      IVA\nQuadro elettrico di distribuzione 24 moduli     2       € 180,00          € 360,00    22%\nInterruttore magnetotermico differenziale       6       € 45,00           € 270,00    22%\nCavo FG16 3x2,5 mm² (rotolo 100 m)              3       € 95,00           € 285,00    22%\nInstallazione e collaudo impianto                 1       € 600,00          € 600,00    22%\nSopralluogo tecnico                               1       € 120,00          € 120,00    22%\n\nImponibile                                      € 1.635,00\nIVA 22%                                         € 359,70\n\nTotale documento                               € 1.994,70\n\nNote\nGrazie per aver scelto Elettroimpianti Verdi S.r.l.\nPer qualsiasi chiarimento, non esitate a contattarci.\n\nSoluzioni elettriche per un futuro più sostenibile.\n\nCoordinate bancarie\nIntesa Sanpaolo S.p.A.\nIBAN: IT60 X030 6912 3456 7890 1234 567\nBIC: BCITITMM",
+        "[F0005 | Delta Consulting SRL | fattura n. 2026/046 del 2026-07-20]\nDelta Consulting SRL\nP. IVA 04567890123\nCorso Vittorio Emanuele 40, 20122 Milano (MI)\nFATTURA\n N. 2026/046\nData 2026-07-20\nDestinatario\nImpresa Cliente SRL  -  P. IVA 09999999999\nCorso Italia 1, 70121 Bari (BA)\nDescrizione\nQ.ta\nPrezzo\nImporto\nConsulenza organizzativa luglio\n25\n200,00 €\n5.000,00 €\nImponibile\n5.000,00 €\nIVA 22%\n1.100,00 €\nTOTALE\n6.100,00 €\nScadenza pagamento: 2026-09-18\nModalita: bonifico bancario IBAN IT00 A000 0000 0000 0000 0000 000\n"
+      ],
+      "risposta": "La campagna social è stata curata da Studio Creativo Bianchi, come indicato nella fattura n. FAT-2025-014 del 12/03/2025.",
+      "traccia": null,
+      "ricerca": {
+        "hit": 1.0,
+        "recall": 1.0,
+        "mrr": 1.0
+      },
+      "ragas": {
+        "llm_context_precision_with_reference": 1.0,
+        "context_recall": 1.0,
+        "faithfulness": 1.0,
+        "factual_correctness": 0.4,
+        "answer_relevancy": 0.92
+      }
+    },
+    {
+      "domanda": "Quale fornitore ha sviluppato il sito web?",
+      "riferimento": "Officina Digitale S.r.l., fattura FAT/2025/0048: sviluppo del sito web (40 x 65,00 = 2.600,00 euro) e integrazione del CMS.",
+      "attese": [
+        "F0010"
+      ],
+      "trovate": [
+        "F0010",
+        "F0011",
+        "F0003",
+        "F0007"
+      ],
+      "brani": [
+        "[F0010 | Officina Digitale S.r.l. | fattura n. FAT/2025/0048 del 2025-04-14]\nOfficina Digitale S.r.l.\nSOLUZIONI PER IL TUO BUSINESS\n\nVia delle Idee, 12\n40125 Bologna (BO)\nP.IVA 12345678901\nC.F. 12345678901\ninfo@officinadigitale.it\nwww.officinadigitale.it\n\nCliente\nVerdeCasa S.n.c.\nVia dei Tigli, 8\n20122 Milano (MI)\nP.IVA 98765432109\nC.F. 98765432109\n\nIDEE\nTECNOLOGIA\nPERSONE\n\nFATTURA\n\nNumero fattura\nFAT/2025/0048\n\nData emissione\n14/04/2025\n\nData scadenza\n14/05/2025\n\nCondizioni di pagamento\nBonifico bancario 30 gg\n\nOggetto\nFornitura servizi di consulenza e sviluppo\nper il progetto sito web aziendale\n\nDescrizione                Q.tà    Prezzo unitario    Importo\nConsulenza strategica\nAnalisi requisiti e definizione architettura       8       € 75,00           € 600,00\n\nSviluppo sito web\nRealizzazione e personalizzazione tema             40      € 65,00           € 2.600,00\n\nIntegrazione CMS\nConfigurazione e test                               8       € 60,00           € 480,00\n\nFormazione\nSessione formativa per il team cliente             4       € 70,00           € 280,00\n\nSubtotale                                                        € 3.960,00\n\nIVA 22%                                                         € 871,20\n\nTotale                                                         € 4.831,20\n\nCoordinate bancarie\nBanca: BPER Banca S.p.A.\nIBAN: IT32 X053 8702 4010 0000 1234 567\nIntestatario: Officina Digitale S.r.l.\n\nGrazie per la fiducia!\n\nCostruiamo\ninsieme il digitale\ndi domani.",
+        "[F0011 | Studio Creativo Bianchi | fattura n. FAT-2025-014 del 2025-03-12]\nStudio Creativo Bianchi\nIDEE. PROGETTI. COMUNICAZIONE.\n\nVia delle Arti, 12\n40126 Bologna (BO)\nP.IVA 03876541203\ninfo@studiocreativobianchi.it\nwww.studiocreativobianchi.it\n\nFATTURA\n\nNumero\nFAT-2025-014\n\nData emissione\n12/03/2025\n\nData scadenza\n11/04/2025\n\nCliente\n\nVerdeVivo S.r.l.\nVia Nazionale, 45\n50123 Firenze (FI)\nP.IVA 06123450987\n\nDescrizione\n\nQtà\n\nPrezzo unitario\n\nImporto\n\nProgettazione grafica campagna social\nConcept, layout e adattamenti formati\n\n1\n\n€ 800,00\n\n€ 800,00\n\nRealizzazione contenuti visivi\nFotografie e post-produzione\n\n1\n\n€ 600,00\n\n€ 600,00\n\nConsulenza strategica\nPiano editoriale e linee guida comunicazione\n\n1\n\n€ 400,00\n\n€ 400,00\n\nImponibile\n\n€ 1.800,00\n\nIVA 22%\n\n€ 396,00\n\nTotale\n\n€ 2.196,00\n\nModalità di pagamento\n\nBonifico bancario\nIBAN: IT60 X030 6902 4010 0000 0123 456\nIntestato a: Studio Creativo Bianchi\nCausale: FAT-2025-014\n\nGrazie per la fiducia!\n\nCreatività\nfa la differenza.",
+        "[F0003 | Gamma Software Srl | fattura n. 2026/041 del 2026-07-01]\nGamma Software Srl\nP. IVA 03456789012\nViale della Tecnica 88, 00144 Roma (RM)\nFATTURA\n N. 2026/041\nData 2026-07-01\nDestinatario\nImpresa Cliente SRL  -  P. IVA 09999999999\nCorso Italia 1, 70121 Bari (BA)\nDescrizione\nQ.ta\nPrezzo\nImporto\nLicenze SaaS Q3\n5\n500,00 €\n2.500,00 €\nImponibile\n2.500,00 €\nIVA 22%\n550,00 €\nTOTALE\n3.050,00 €\nScadenza pagamento: 2026-07-31\nModalita: bonifico bancario IBAN IT00 A000 0000 0000 0000 0000 000\n",
+        "[F0007 | Gamma Software Srl | fattura n. 2026/058 del 2026-09-12]\nGamma Software Srl\nP. IVA 03456789012\nViale della Tecnica 88, 00144 Roma (RM)\nFATTURA\n N. 2026/058\nData 2026-09-12\nDestinatario\nImpresa Cliente SRL  -  P. IVA 09999999999\nCorso Italia 1, 70121 Bari (BA)\nDescrizione\nQ.ta\nPrezzo\nImporto\nLicenze SaaS Q4\n5\n640,00 €\n3.200,00 €\nImponibile\n3.200,00 €\nIVA 22%\n704,00 €\nTOTALE\n3.904,00 €\nScadenza pagamento: 2026-10-12\nModalita: bonifico bancario IBAN IT00 A000 0000 0000 0000 0000 000\n"
+      ],
+      "risposta": "Il fornitore che ha sviluppato il sito web è Officina Digitale S.r.l., come indicato nella fattura n. FAT/2025/0048 del 2025-04-14.",
+      "traccia": null,
+      "ricerca": {
+        "hit": 1.0,
+        "recall": 1.0,
+        "mrr": 1.0
+      },
+      "ragas": {
+        "llm_context_precision_with_reference": 1.0,
+        "context_recall": 1.0,
+        "faithfulness": 1.0,
+        "factual_correctness": 0.57,
+        "answer_relevancy": 0.844
+      }
+    },
+    {
+      "domanda": "Quanto è costata l'energia di agosto?",
+      "riferimento": "Epsilon Energia SpA, fattura 2026/056: fornitura energia agosto 720,00 euro più IVA 22%, totale 878,40 euro.",
+      "attese": [
+        "F0006"
+      ],
+      "trovate": [
+        "F0006",
+        "F0012",
+        "F0008",
+        "F0005"
+      ],
+      "brani": [
+        "[F0006 | Epsilon Energia SpA | fattura n. 2026/056 del 2026-09-05]\nEpsilon Energia SpA\nP. IVA 05678901234\nVia dell'Energia 3, 35100 Padova (PD)\nFATTURA\n N. 2026/056\nData 2026-09-05\nDestinatario\nImpresa Cliente SRL  -  P. IVA 09999999999\nCorso Italia 1, 70121 Bari (BA)\nDescrizione\nQ.ta\nPrezzo\nImporto\nFornitura energia agosto\n1\n720,00 €\n720,00 €\nImponibile\n720,00 €\nIVA 22%\n158,40 €\nTOTALE\n878,40 €\nScadenza pagamento: 2026-11-04\nModalita: bonifico bancario IBAN IT00 A000 0000 0000 0000 0000 000\n",
+        "[F0012 | Elettroimpianti Verdi S.r.l. | fattura n. FAT-2025-0147 del 2025-03-12]\nElettroimpianti Verdi S.r.l.\nImpianti elettrici civili e industriali\nEfficienza oggi, energia per domani\n\nVia delle Industrie, 24 - 35129 Padova (PD)\nP. IVA 05231470968 - C.F. 05231470968\nTel. 049 8203941 - info@elettroimpiantiverdi.it\nwww.elettroimpiantiverdi.it\n\nProgettazione\nInstallazione\nManutenzione\nImpianti fotovoltaici\nDomotica\n\nFATTURA\n\nNumero\nFAT-2025-0147\n\nData\n12/03/2025\n\nCodice cliente\nCLI-0089\n\nModalità di pagamento\nBonifico bancario 30 gg df\n\nFornitore\nElettroimpianti Verdi S.r.l.\nVia delle Industrie, 24\n35129 Padova (PD)\nP. IVA 05231470968\nC.F. 05231470968\n\nCliente\nEdilizia Rossi S.p.A.\nVia Roma, 112\n36077 Altavilla Vicentina (VI)\nP. IVA 04128730245\nC.F. 04128730245\n\nDescrizione                         Q.tà    Prezzo unitario    Importo      IVA\nQuadro elettrico di distribuzione 24 moduli     2       € 180,00          € 360,00    22%\nInterruttore magnetotermico differenziale       6       € 45,00           € 270,00    22%\nCavo FG16 3x2,5 mm² (rotolo 100 m)              3       € 95,00           € 285,00    22%\nInstallazione e collaudo impianto                 1       € 600,00          € 600,00    22%\nSopralluogo tecnico                               1       € 120,00          € 120,00    22%\n\nImponibile                                      € 1.635,00\nIVA 22%                                         € 359,70\n\nTotale documento                               € 1.994,70\n\nNote\nGrazie per aver scelto Elettroimpianti Verdi S.r.l.\nPer qualsiasi chiarimento, non esitate a contattarci.\n\nSoluzioni elettriche per un futuro più sostenibile.\n\nCoordinate bancarie\nIntesa Sanpaolo S.p.A.\nIBAN: IT60 X030 6912 3456 7890 1234 567\nBIC: BCITITMM",
+        "[F0008 | ETA PULIZIE SRL | fattura n. 2026/060 del 2026-09-14]\nETA PULIZIE SRL\nP. IVA 07890123456   -   Servizi di pulizia professionale\nFattura n.\n2026/060\nData emissione\n2026-09-14\nScadenza\n2026-10-14\nCliente\nImpresa Cliente SRL\nPrestazione\nPulizie uffici settembre\n1.500,00 €\nImponibile\n1.500,00 €\nIVA (0%)\n0,00 €\nTotale documento\n1.500,00 €\nRegime IVA: Reverse charge art. 17 c.6: IVA a carico del committente, da verificare\nInversione contabile ex art. 17, c.6 DPR 633/72 - IVA assolta dal committente.\n",
+        "[F0005 | Delta Consulting SRL | fattura n. 2026/046 del 2026-07-20]\nDelta Consulting SRL\nP. IVA 04567890123\nCorso Vittorio Emanuele 40, 20122 Milano (MI)\nFATTURA\n N. 2026/046\nData 2026-07-20\nDestinatario\nImpresa Cliente SRL  -  P. IVA 09999999999\nCorso Italia 1, 70121 Bari (BA)\nDescrizione\nQ.ta\nPrezzo\nImporto\nConsulenza organizzativa luglio\n25\n200,00 €\n5.000,00 €\nImponibile\n5.000,00 €\nIVA 22%\n1.100,00 €\nTOTALE\n6.100,00 €\nScadenza pagamento: 2026-09-18\nModalita: bonifico bancario IBAN IT00 A000 0000 0000 0000 0000 000\n"
+      ],
+      "risposta": "L'energia di agosto è costata 720,00 € (imponibile) più IVA 22% pari a 158,40 €, per un totale di 878,40 €. Questo importo è indicato nella fattura n. 2026/056 del 2026-09-05 emessa da Epsilon Energia SpA.",
+      "traccia": null,
+      "ricerca": {
+        "hit": 1.0,
+        "recall": 1.0,
+        "mrr": 1.0
+      },
+      "ragas": {
+        "llm_context_precision_with_reference": 1.0,
+        "context_recall": 1.0,
+        "faithfulness": 1.0,
+        "factual_correctness": 0.91,
+        "answer_relevancy": 0.824
+      }
+    },
+    {
+      "domanda": "Chi ha trasportato le merci a giugno?",
+      "riferimento": "Beta Logistica SpA, fattura 2026/039: trasporto merci giugno 3.400,00 euro, totale 4.148,00 euro con IVA.",
+      "attese": [
+        "F0002"
+      ],
+      "trovate": [
+        "F0002",
+        "F0005",
+        "F0004",
+        "F0001"
+      ],
+      "brani": [
+        "[F0002 | Beta Logistica SpA | fattura n. 2026/039 del 2026-06-18]\nBeta Logistica SpA\nP. IVA 02345678901\nVia del Porto 5, 70122 Bari (BA)\nFATTURA\n N. 2026/039\nData 2026-06-18\nDestinatario\nImpresa Cliente SRL  -  P. IVA 09999999999\nCorso Italia 1, 70121 Bari (BA)\nDescrizione\nQ.ta\nPrezzo\nImporto\nTrasporto merci giugno\n1\n3.400,00 €\n3.400,00 €\nImponibile\n3.400,00 €\nIVA 22%\n748,00 €\nTOTALE\n4.148,00 €\nScadenza pagamento: 2026-07-18\nModalita: bonifico bancario IBAN IT00 A000 0000 0000 0000 0000 000\n",
+        "[F0005 | Delta Consulting SRL | fattura n. 2026/046 del 2026-07-20]\nDelta Consulting SRL\nP. IVA 04567890123\nCorso Vittorio Emanuele 40, 20122 Milano (MI)\nFATTURA\n N. 2026/046\nData 2026-07-20\nDestinatario\nImpresa Cliente SRL  -  P. IVA 09999999999\nCorso Italia 1, 70121 Bari (BA)\nDescrizione\nQ.ta\nPrezzo\nImporto\nConsulenza organizzativa luglio\n25\n200,00 €\n5.000,00 €\nImponibile\n5.000,00 €\nIVA 22%\n1.100,00 €\nTOTALE\n6.100,00 €\nScadenza pagamento: 2026-09-18\nModalita: bonifico bancario IBAN IT00 A000 0000 0000 0000 0000 000\n",
+        "[F0004 | Alfa Forniture SRL | fattura n. 2026/044 del 2026-07-05]\nAlfa Forniture SRL\nP. IVA 01234567890\nVia delle Industrie 12, 70100 Bari (BA)\nFATTURA\n N. 2026/044\nData 2026-07-05\nDestinatario\nImpresa Cliente SRL  -  P. IVA 09999999999\nCorso Italia 1, 70121 Bari (BA)\nDescrizione\nQ.ta\nPrezzo\nImporto\nCancelleria varia\n1\n800,00 €\n800,00 €\nImponibile\n800,00 €\nIVA 22%\n176,00 €\nTOTALE\n976,00 €\nScadenza pagamento: 2026-08-04\nModalita: bonifico bancario IBAN IT00 A000 0000 0000 0000 0000 000\n",
+        "[F0001 | Alfa Forniture SRL | fattura n. 2026/037 del 2026-06-10]\nAlfa Forniture SRL\nP. IVA 01234567890\nVia delle Industrie 12, 70100 Bari (BA)\nFATTURA\n N. 2026/037\nData 2026-06-10\nDestinatario\nImpresa Cliente SRL  -  P. IVA 09999999999\nCorso Italia 1, 70121 Bari (BA)\nDescrizione\nQ.ta\nPrezzo\nImporto\nCarta A4 risme\n60\n12,00 €\n720,00 €\nToner compatibili\n8\n60,00 €\n480,00 €\nImponibile\n1.200,00 €\nIVA 22%\n264,00 €\nTOTALE\n1.464,00 €\nScadenza pagamento: 2026-07-10\nModalita: bonifico bancario IBAN IT00 A000 0000 0000 0000 0000 000\n"
+      ],
+      "risposta": "Le merci a giugno sono state trasportate da Beta Logistica SpA, come indicato nella fattura n. 2026/039 del 2026-06-18.",
+      "traccia": null,
+      "ricerca": {
+        "hit": 1.0,
+        "recall": 1.0,
+        "mrr": 1.0
+      },
+      "ragas": {
+        "llm_context_precision_with_reference": 1.0,
+        "context_recall": 1.0,
+        "faithfulness": 1.0,
+        "factual_correctness": 0.57,
+        "answer_relevancy": 0.797
+      }
+    },
+    {
+      "domanda": "Cosa abbiamo comprato da Ottica Visione?",
+      "riferimento": "La fattura n. 17 del 25/09/2026 di Ottica Visione srl (183 euro) non descrive cosa è stato acquistato.",
+      "attese": [
+        "F0016"
+      ],
+      "trovate": [
+        "F0016",
+        "F0010",
+        "F0011",
+        "F0012"
+      ],
+      "brani": [
+        "[F0016 | Ottica Visione srl | fattura n. 17 del 2026-09-25]\nFattura Ottica Visione srl, P.IVA 02233445566, n. 17 del 25/09/2026, scadenza 25/10/2026, imponibile 150 euro, IVA 33 euro, totale 183 euro",
+        "[F0010 | Officina Digitale S.r.l. | fattura n. FAT/2025/0048 del 2025-04-14]\nOfficina Digitale S.r.l.\nSOLUZIONI PER IL TUO BUSINESS\n\nVia delle Idee, 12\n40125 Bologna (BO)\nP.IVA 12345678901\nC.F. 12345678901\ninfo@officinadigitale.it\nwww.officinadigitale.it\n\nCliente\nVerdeCasa S.n.c.\nVia dei Tigli, 8\n20122 Milano (MI)\nP.IVA 98765432109\nC.F. 98765432109\n\nIDEE\nTECNOLOGIA\nPERSONE\n\nFATTURA\n\nNumero fattura\nFAT/2025/0048\n\nData emissione\n14/04/2025\n\nData scadenza\n14/05/2025\n\nCondizioni di pagamento\nBonifico bancario 30 gg\n\nOggetto\nFornitura servizi di consulenza e sviluppo\nper il progetto sito web aziendale\n\nDescrizione                Q.tà    Prezzo unitario    Importo\nConsulenza strategica\nAnalisi requisiti e definizione architettura       8       € 75,00           € 600,00\n\nSviluppo sito web\nRealizzazione e personalizzazione tema             40      € 65,00           € 2.600,00\n\nIntegrazione CMS\nConfigurazione e test                               8       € 60,00           € 480,00\n\nFormazione\nSessione formativa per il team cliente             4       € 70,00           € 280,00\n\nSubtotale                                                        € 3.960,00\n\nIVA 22%                                                         € 871,20\n\nTotale                                                         € 4.831,20\n\nCoordinate bancarie\nBanca: BPER Banca S.p.A.\nIBAN: IT32 X053 8702 4010 0000 1234 567\nIntestatario: Officina Digitale S.r.l.\n\nGrazie per la fiducia!\n\nCostruiamo\ninsieme il digitale\ndi domani.",
+        "[F0011 | Studio Creativo Bianchi | fattura n. FAT-2025-014 del 2025-03-12]\nStudio Creativo Bianchi\nIDEE. PROGETTI. COMUNICAZIONE.\n\nVia delle Arti, 12\n40126 Bologna (BO)\nP.IVA 03876541203\ninfo@studiocreativobianchi.it\nwww.studiocreativobianchi.it\n\nFATTURA\n\nNumero\nFAT-2025-014\n\nData emissione\n12/03/2025\n\nData scadenza\n11/04/2025\n\nCliente\n\nVerdeVivo S.r.l.\nVia Nazionale, 45\n50123 Firenze (FI)\nP.IVA 06123450987\n\nDescrizione\n\nQtà\n\nPrezzo unitario\n\nImporto\n\nProgettazione grafica campagna social\nConcept, layout e adattamenti formati\n\n1\n\n€ 800,00\n\n€ 800,00\n\nRealizzazione contenuti visivi\nFotografie e post-produzione\n\n1\n\n€ 600,00\n\n€ 600,00\n\nConsulenza strategica\nPiano editoriale e linee guida comunicazione\n\n1\n\n€ 400,00\n\n€ 400,00\n\nImponibile\n\n€ 1.800,00\n\nIVA 22%\n\n€ 396,00\n\nTotale\n\n€ 2.196,00\n\nModalità di pagamento\n\nBonifico bancario\nIBAN: IT60 X030 6902 4010 0000 0123 456\nIntestato a: Studio Creativo Bianchi\nCausale: FAT-2025-014\n\nGrazie per la fiducia!\n\nCreatività\nfa la differenza.",
+        "[F0012 | Elettroimpianti Verdi S.r.l. | fattura n. FAT-2025-0147 del 2025-03-12]\nElettroimpianti Verdi S.r.l.\nImpianti elettrici civili e industriali\nEfficienza oggi, energia per domani\n\nVia delle Industrie, 24 - 35129 Padova (PD)\nP. IVA 05231470968 - C.F. 05231470968\nTel. 049 8203941 - info@elettroimpiantiverdi.it\nwww.elettroimpiantiverdi.it\n\nProgettazione\nInstallazione\nManutenzione\nImpianti fotovoltaici\nDomotica\n\nFATTURA\n\nNumero\nFAT-2025-0147\n\nData\n12/03/2025\n\nCodice cliente\nCLI-0089\n\nModalità di pagamento\nBonifico bancario 30 gg df\n\nFornitore\nElettroimpianti Verdi S.r.l.\nVia delle Industrie, 24\n35129 Padova (PD)\nP. IVA 05231470968\nC.F. 05231470968\n\nCliente\nEdilizia Rossi S.p.A.\nVia Roma, 112\n36077 Altavilla Vicentina (VI)\nP. IVA 04128730245\nC.F. 04128730245\n\nDescrizione                         Q.tà    Prezzo unitario    Importo      IVA\nQuadro elettrico di distribuzione 24 moduli     2       € 180,00          € 360,00    22%\nInterruttore magnetotermico differenziale       6       € 45,00           € 270,00    22%\nCavo FG16 3x2,5 mm² (rotolo 100 m)              3       € 95,00           € 285,00    22%\nInstallazione e collaudo impianto                 1       € 600,00          € 600,00    22%\nSopralluogo tecnico                               1       € 120,00          € 120,00    22%\n\nImponibile                                      € 1.635,00\nIVA 22%                                         € 359,70\n\nTotale documento                               € 1.994,70\n\nNote\nGrazie per aver scelto Elettroimpianti Verdi S.r.l.\nPer qualsiasi chiarimento, non esitate a contattarci.\n\nSoluzioni elettriche per un futuro più sostenibile.\n\nCoordinate bancarie\nIntesa Sanpaolo S.p.A.\nIBAN: IT60 X030 6912 3456 7890 1234 567\nBIC: BCITITMM"
+      ],
+      "risposta": "Da Ottica Visione srl abbiamo acquistato beni o servizi per un importo imponibile di 150 euro più IVA 33 euro, per un totale di 183 euro, come indicato nella fattura n. 17 del 25/09/2026. Tuttavia, il dettaglio specifico di cosa sia stato acquistato non è riportato nel brano disponibile.",
+      "traccia": null,
+      "ricerca": {
+        "hit": 1.0,
+        "recall": 1.0,
+        "mrr": 1.0
+      },
+      "ragas": {
+        "llm_context_precision_with_reference": 1.0,
+        "context_recall": 1.0,
+        "faithfulness": 1.0,
+        "factual_correctness": 0.73,
+        "answer_relevancy": 0.0
+      }
+    },
+    {
+      "domanda": "Abbiamo comprato delle sedie da ufficio?",
+      "riferimento": "No: nessuna fattura parla di sedie da ufficio.",
+      "attese": [],
+      "trovate": [
+        "F0010",
+        "F0011",
+        "F0004",
+        "F0001"
+      ],
+      "brani": [
+        "[F0010 | Officina Digitale S.r.l. | fattura n. FAT/2025/0048 del 2025-04-14]\nOfficina Digitale S.r.l.\nSOLUZIONI PER IL TUO BUSINESS\n\nVia delle Idee, 12\n40125 Bologna (BO)\nP.IVA 12345678901\nC.F. 12345678901\ninfo@officinadigitale.it\nwww.officinadigitale.it\n\nCliente\nVerdeCasa S.n.c.\nVia dei Tigli, 8\n20122 Milano (MI)\nP.IVA 98765432109\nC.F. 98765432109\n\nIDEE\nTECNOLOGIA\nPERSONE\n\nFATTURA\n\nNumero fattura\nFAT/2025/0048\n\nData emissione\n14/04/2025\n\nData scadenza\n14/05/2025\n\nCondizioni di pagamento\nBonifico bancario 30 gg\n\nOggetto\nFornitura servizi di consulenza e sviluppo\nper il progetto sito web aziendale\n\nDescrizione                Q.tà    Prezzo unitario    Importo\nConsulenza strategica\nAnalisi requisiti e definizione architettura       8       € 75,00           € 600,00\n\nSviluppo sito web\nRealizzazione e personalizzazione tema             40      € 65,00           € 2.600,00\n\nIntegrazione CMS\nConfigurazione e test                               8       € 60,00           € 480,00\n\nFormazione\nSessione formativa per il team cliente             4       € 70,00           € 280,00\n\nSubtotale                                                        € 3.960,00\n\nIVA 22%                                                         € 871,20\n\nTotale                                                         € 4.831,20\n\nCoordinate bancarie\nBanca: BPER Banca S.p.A.\nIBAN: IT32 X053 8702 4010 0000 1234 567\nIntestatario: Officina Digitale S.r.l.\n\nGrazie per la fiducia!\n\nCostruiamo\ninsieme il digitale\ndi domani.",
+        "[F0011 | Studio Creativo Bianchi | fattura n. FAT-2025-014 del 2025-03-12]\nStudio Creativo Bianchi\nIDEE. PROGETTI. COMUNICAZIONE.\n\nVia delle Arti, 12\n40126 Bologna (BO)\nP.IVA 03876541203\ninfo@studiocreativobianchi.it\nwww.studiocreativobianchi.it\n\nFATTURA\n\nNumero\nFAT-2025-014\n\nData emissione\n12/03/2025\n\nData scadenza\n11/04/2025\n\nCliente\n\nVerdeVivo S.r.l.\nVia Nazionale, 45\n50123 Firenze (FI)\nP.IVA 06123450987\n\nDescrizione\n\nQtà\n\nPrezzo unitario\n\nImporto\n\nProgettazione grafica campagna social\nConcept, layout e adattamenti formati\n\n1\n\n€ 800,00\n\n€ 800,00\n\nRealizzazione contenuti visivi\nFotografie e post-produzione\n\n1\n\n€ 600,00\n\n€ 600,00\n\nConsulenza strategica\nPiano editoriale e linee guida comunicazione\n\n1\n\n€ 400,00\n\n€ 400,00\n\nImponibile\n\n€ 1.800,00\n\nIVA 22%\n\n€ 396,00\n\nTotale\n\n€ 2.196,00\n\nModalità di pagamento\n\nBonifico bancario\nIBAN: IT60 X030 6902 4010 0000 0123 456\nIntestato a: Studio Creativo Bianchi\nCausale: FAT-2025-014\n\nGrazie per la fiducia!\n\nCreatività\nfa la differenza.",
+        "[F0004 | Alfa Forniture SRL | fattura n. 2026/044 del 2026-07-05]\nAlfa Forniture SRL\nP. IVA 01234567890\nVia delle Industrie 12, 70100 Bari (BA)\nFATTURA\n N. 2026/044\nData 2026-07-05\nDestinatario\nImpresa Cliente SRL  -  P. IVA 09999999999\nCorso Italia 1, 70121 Bari (BA)\nDescrizione\nQ.ta\nPrezzo\nImporto\nCancelleria varia\n1\n800,00 €\n800,00 €\nImponibile\n800,00 €\nIVA 22%\n176,00 €\nTOTALE\n976,00 €\nScadenza pagamento: 2026-08-04\nModalita: bonifico bancario IBAN IT00 A000 0000 0000 0000 0000 000\n",
+        "[F0001 | Alfa Forniture SRL | fattura n. 2026/037 del 2026-06-10]\nAlfa Forniture SRL\nP. IVA 01234567890\nVia delle Industrie 12, 70100 Bari (BA)\nFATTURA\n N. 2026/037\nData 2026-06-10\nDestinatario\nImpresa Cliente SRL  -  P. IVA 09999999999\nCorso Italia 1, 70121 Bari (BA)\nDescrizione\nQ.ta\nPrezzo\nImporto\nCarta A4 risme\n60\n12,00 €\n720,00 €\nToner compatibili\n8\n60,00 €\n480,00 €\nImponibile\n1.200,00 €\nIVA 22%\n264,00 €\nTOTALE\n1.464,00 €\nScadenza pagamento: 2026-07-10\nModalita: bonifico bancario IBAN IT00 A000 0000 0000 0000 0000 000\n"
+      ],
+      "risposta": "Dai brani forniti non risulta alcun acquisto di sedie da ufficio. Le fatture elencano servizi di consulenza, sviluppo web, progettazione grafica, cancelleria, carta A4 e toner, ma nessuna sedia da ufficio.",
+      "traccia": null,
+      "ricerca": {},
+      "ragas": {
+        "llm_context_precision_with_reference": 1.0,
+        "context_recall": 1.0,
+        "faithfulness": 1.0,
+        "factual_correctness": 0.4,
+        "answer_relevancy": 0.57
+      }
+    }
+  ]
+}

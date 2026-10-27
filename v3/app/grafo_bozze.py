@@ -37,6 +37,7 @@ import archivio
 import avvisi
 import bozze_fatture as boz
 import config
+import osservabilita
 import registro_fatture as reg
 from estrazione import ErroreEstrazione, estrai_da_file, estrai_da_testo
 from fatture_comuni import (PIVA_ESTERO_ASSENTE, e_estero, euro_in_centesimi, normalizza_data, normalizza_paese,
@@ -396,7 +397,10 @@ def domanda_in_sospeso(chat_id: str) -> Optional[str]:
 
 
 def _esegui(chat_id: str, thread: str, ingresso) -> str:
-    risultato = grafo.invoke(ingresso, {"configurable": {"thread_id": thread}})
+    # Con Langfuse attivo, una traccia per ogni passo della bozza (lettura, interprete, registrazione),
+    # raggruppate per chat: le chiamate dentro i nodi ereditano il callback.
+    risultato = grafo.invoke(ingresso, {"configurable": {"thread_id": thread}}
+                             | osservabilita.config("bozza-fattura", metadata={"langfuse_session_id": str(chat_id)}))
     aperte = _aperte()
     if "__interrupt__" in risultato:
         aperte[str(chat_id)] = thread

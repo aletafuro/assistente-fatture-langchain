@@ -61,6 +61,12 @@ MODELLO_FOTO = os.getenv("MODELLO_LETTURA_FOTO", "gpt-4.1-mini")
 MODELLO_INTERPRETE = os.getenv("MODELLO_INTERPRETE", "gpt-4o-mini")
 AZIENDA_PIVA = (os.getenv("AZIENDA_PIVA") or "").upper().removeprefix("IT") or None
 
+# Indice del RAG sul contenuto delle fatture (rag_fatture.py): "memoria" (predefinito, nessun servizio
+# da installare) oppure "pgvector" (Postgres + pgvector all'indirizzo PGVECTOR_URL, resta salvato).
+RAG_INDICE = os.getenv("RAG_INDICE", "memoria").lower()
+PGVECTOR_URL = os.getenv("PGVECTOR_URL")          # es. postgresql+psycopg://fatture:PASSWORD@localhost:5432/fatture
+RAG_COLLEZIONE = os.getenv("RAG_COLLEZIONE", "fatture")
+
 # API REST di sola lettura (api_fatture.py): chi la chiama deve mandare questa chiave nell'header X-API-Key.
 # Se è vuota l'API risponde solo a /salute: meglio spenta che aperta a tutti.
 API_CHIAVE = os.getenv("API_CHIAVE") or None

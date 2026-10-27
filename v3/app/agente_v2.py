@@ -36,6 +36,7 @@ from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
 from pydantic import BaseModel, Field
 
 import estratti_conto
+import osservabilita
 import rag_fatture
 import termini
 from langchain_core.tools import tool
@@ -122,7 +123,9 @@ async def chiedi(messaggio: str, id_conversazione: str) -> tuple:
     """Risposta dell'agente + eventuali file creati dai tool (es. l'Excel)."""
     configurazione = {"configurable": {"thread_id": id_conversazione}}
     prima = len((await _agente.aget_state(configurazione)).values.get("messages", []))
-    risultato = await _agente.ainvoke({"messages": [{"role": "user", "content": messaggio}]}, configurazione)
+    risultato = await _agente.ainvoke(
+        {"messages": [{"role": "user", "content": messaggio}]},
+        configurazione | osservabilita.config("agente", metadata={"langfuse_session_id": id_conversazione}))
     file_creati = [Path(m.content.removeprefix("FILE_CREATO: ").strip())
                    for m in risultato["messages"][prima:]
                    if m.type == "tool" and isinstance(m.content, str) and m.content.startswith("FILE_CREATO: ")]
@@ -145,4 +148,4 @@ _router = init_chat_model("openai:gpt-4.1-mini", temperature=0).with_structured_
 
 
 def e_nuova_fattura(testo: str) -> bool:
-    return _router.invoke(f"Messaggio dell'utente: {testo}").nuova_fattura
+    return _router.invoke(f"Messaggio dell'utente: {testo}", config=osservabilita.config("router")).nuova_fattura

@@ -17,7 +17,8 @@ risconti li calcola il codice.
 | Uscite | registro, riepiloghi | **registrazione contabile**, **scadenziario annuale**, **ratei e risconti** a una data |
 | Dove lavora | chat privata | **gruppo Telegram** (risponde solo quando è chiamato) e cartelle condivise |
 | Per altri programmi | server MCP (per agenti AI) | anche **API REST FastAPI** in sola lettura, con chiave e documentazione OpenAPI |
-| Qualità | golden set | **174 test** senza LLM, **MLflow** per scegliere i modelli, **DSPy** per l'interprete delle risposte |
+| Qualità | golden set | **182 test** senza LLM, **MLflow** per scegliere i modelli, **DSPy** per l'interprete delle risposte, **RAGAS** per il RAG, tracce **Langfuse** |
+| RAG | indice in memoria | in memoria **o su Postgres + pgvector**, confrontati con lo stesso golden set |
 | Rilascio | a mano | **uv** + lock file, **Docker** multi-stadio con i test dentro, **GitHub Actions**, aggiornamento con un comando |
 
 ## Cosa fa
@@ -66,7 +67,7 @@ curl -H "X-API-Key: una-chiave" "http://127.0.0.1:8000/scadenze?entro_giorni=15"
 
 ## MLOps
 
-**Test senza modello.** I 174 test (`tests/`) controllano regole e conversioni senza chiamare l'LLM e senza rete:
+**Test senza modello.** I 182 test (`tests/`) controllano regole e conversioni senza chiamare l'LLM e senza rete:
 girano in pochi secondi, sempre uguali, a ogni modifica. La qualità del modello si misura a parte (golden set).
 
 **Letture salvate.** Del modello si salva solo la risposta grezza, con una chiave che dipende da modello, istruzioni
@@ -110,6 +111,38 @@ come gli viene ("sì", "il totale è 1.481,35", "sulla fattura non c'è"). Su 48
 Gli esempi scelti da DSPy sono esportati in `app/interprete_esempi.json` e usati dal prompt LangChain del bot:
 più accurato e con un modello più economico. L'ottimizzatore più sofisticato non è stato il migliore.
 
+**Valutazione del RAG (RAGAS, `app/valuta_rag.py`).** Il RAG risponde a domande sul contenuto delle fatture
+("chi ci ha venduto il toner?"). Golden set: 16 domande sulle fatture inventate di prova, con la risposta giusta e
+le fatture dove si trova; due domande non hanno risposta nelle fatture ("abbiamo comprato sedie da ufficio?"), e il
+RAG deve dirlo. Due livelli di misura:
+
+- **ricerca**, in Python, gratis e ripetibile: la fattura giusta è tra le prime 4 (hit, recall) e in che posizione (MRR);
+- **risposta**, con **RAGAS** (un LLM fa da giudice): `faithfulness` (ogni affermazione è scritta nelle fatture trovate,
+  cioè niente invenzioni), `context_recall`, `context_precision`, `factual_correctness`, `answer_relevancy`.
+
+| Indice | hit@4 | recall@4 | MRR | faithfulness | context recall | context precision | factual correctness | answer relevancy |
+|---|---|---|---|---|---|---|---|---|
+| in memoria | 1,00 | 1,00 | 0,92 | 0,95 | 1,00 | 0,87 | 0,61 | 0,78 |
+| **pgvector** | 1,00 | 1,00 | 0,92 | 0,99 | 1,00 | 0,87 | 0,57 | 0,77 |
+
+Cosa dicono i numeri:
+- **pgvector non cambia la qualità**: stesse fatture, nello stesso ordine, in 16 domande su 16. Cambia dove vive
+  l'indice: resta salvato, all'avvio si calcolano gli embedding solo delle fatture nuove, regge migliaia di documenti.
+- Le differenze di RAGAS tra le due righe (0,95 / 0,99) sono **rumore del giudice**: la ricerca è identica e 12 risposte
+  su 16 sono uguali parola per parola. Prima di dire che una modifica migliora qualcosa, la differenza deve superare
+  questo rumore.
+- `factual_correctness` è bassa perché le risposte giuste del golden set hanno più dettagli (quantità, importi) di
+  quelle del bot: misura la completezza più della correttezza. `answer_relevancy` dà 0 alla risposta onesta "la
+  fattura non dice cosa è stato comprato": la metrica penalizza le risposte del tipo "non lo so". Per questo i
+  risultati domanda per domanda sono in `valutazione/VALUTAZIONE_RAG_memoria.md` e `VALUTAZIONE_RAG_pgvector.md`.
+- La prima prova su pgvector aveva **hit 0,80**: la valutazione ha trovato un difetto vero. In `langchain-postgres`
+  l'id di un documento vale per tutta la tabella, non per la collezione: la "F0001" di un'altra collezione sovrascriveva
+  quella della valutazione. Ora l'id è `collezione/F0001`, con un test che lo controlla.
+
+**Osservabilità (Langfuse, `app/osservabilita.py`).** Con le chiavi nel `.env`, ogni chiamata dell'agente, del router
+e del grafo delle bozze diventa una traccia su Langfuse (domanda, risposta, tool usati, tempi, token), raggruppata per
+chat; la valutazione del RAG manda una traccia per domanda con i punteggi RAGAS accanto. Senza chiavi è spenta.
+
 **Su un mese vero** (139 fatture, 92 estere, dati non pubblicati): controvalori in euro uguali al centesimo a quelli
 calcolati a mano in 31 casi su 31; scadenze uguali in 18 su 19.
 
@@ -119,6 +152,7 @@ calcolati a mano in 31 casi su 31; scadenze uguali in 18 su 19.
 uv sync                                   # dipendenze dal lock file
 cp .env.example .env                      # poi compilare i valori (vedi i commenti)
 uv run --group dev pytest -q              # test
+uv run --group dev --group valutazione python app/valuta_rag.py   # RAG con RAGAS (qualche centesimo)
 PYTHONPATH=app uv run python app/avvio.py # bot Telegram
 ```
 
@@ -140,6 +174,9 @@ PYTHONPATH=app uv run python app/elabora_mese.py "cartella/10 Ottobre" --amex es
 | `CARTELLA_REGISTRAZIONE`, `CARTELLA_SCADENZIARIO` | cartelle condivise del blocco mensile e dello scadenziario |
 | `SCADENZIARIO_ANNUALE`, `ARCHIVIA_SU_DRIVE`, `AVVISO_REGIME_IVA` | funzioni da accendere o spegnere |
 | `MODELLO_LETTURA_TESTO`, `MODELLO_LETTURA_FOTO`, `MODELLO_INTERPRETE` | modelli scelti con gli esperimenti, non nel codice |
+| `RAG_INDICE`, `PGVECTOR_PASSWORD` | indice del RAG: `memoria` (predefinito) o `pgvector` (`docker compose --profile pgvector up -d`) |
+| `LANGFUSE_PUBLIC_KEY`, `LANGFUSE_SECRET_KEY`, `LANGFUSE_BASE_URL` | tracce delle chiamate all'LLM su Langfuse (facoltative) |
+| `API_CHIAVE` | chiave dell'API REST (vuota = API spenta) |
 
 Le regole per fornitore (rate) sono dati, non codice: `dati/regole_scadenze.json`.
 
@@ -148,7 +185,7 @@ Le regole per fornitore (rate) sono dati, non codice: `dati/regole_scadenze.json
 | Cartella | Cosa c'è |
 |---|---|
 | `app/` | il codice: `elabora_mese.py` (blocco del mese), `estratti_conto.py`, `cambi_bdi.py`, `verifica_piva.py`, `anagrafica_esteri.py`, `termini.py`, `scadenziario.py`, `ratei_risconti.py`, `bot_telegram_v2.py`, … |
-| `tests/` | 174 test senza modello e senza rete |
+| `tests/` | 182 test senza modello e senza rete (quello su pgvector usa un Postgres vero, con embedding finti) |
 | `file_di_prova/`, `valutazione/` | fatture **inventate**, estratti conto finti, golden set, risultati |
 | `server/` | installazione e aggiornamento su un server Linux |
 

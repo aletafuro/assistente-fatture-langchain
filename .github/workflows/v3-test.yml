@@ -16,12 +16,24 @@ jobs:
     defaults:
       run:
         working-directory: v3
+    # Postgres con pgvector, solo per il test dell'indice del RAG (embedding finti: nessun costo).
+    services:
+      pgvector:
+        image: pgvector/pgvector:pg17
+        env:
+          POSTGRES_USER: fatture
+          POSTGRES_PASSWORD: solo-per-i-test
+          POSTGRES_DB: fatture
+        ports: ["5432:5432"]
+        options: --health-cmd "pg_isready -U fatture" --health-interval 5s --health-retries 10
+    env:
+      PGVECTOR_TEST_URL: postgresql+psycopg://fatture:solo-per-i-test@127.0.0.1:5432/fatture
     steps:
       - name: Scarica il codice
         uses: actions/checkout@v5
 
       - name: Installa uv
-        uses: astral-sh/setup-uv@v6
+        uses: astral-sh/setup-uv@v7
 
       - name: Test (versioni esatte del lock file)
         run: uv run --frozen pytest -q
