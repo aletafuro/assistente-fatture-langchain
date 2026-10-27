@@ -25,7 +25,6 @@ jobs:
       AZIENDA_NOME: "Impresa Cliente SRL"
       AZIENDA_PIVA: "IT09999999999"
       MLFLOW_DISABLE_AGENT_HINT: "1"
-    steps:
       # Langfuse è facoltativo: senza questi secrets la valutazione gira lo stesso, senza tracce.
       LANGFUSE_PUBLIC_KEY: ${{ secrets.LANGFUSE_PUBLIC_KEY }}
       LANGFUSE_SECRET_KEY: ${{ secrets.LANGFUSE_SECRET_KEY }}
