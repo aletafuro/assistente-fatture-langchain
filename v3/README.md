@@ -16,7 +16,8 @@ risconti li calcola il codice.
 | Fornitori esteri | — | partita IVA verificata sul **VIES**, anagrafica ricontrollata ogni mese |
 | Uscite | registro, riepiloghi | **registrazione contabile**, **scadenziario annuale**, **ratei e risconti** a una data |
 | Dove lavora | chat privata | **gruppo Telegram** (risponde solo quando è chiamato) e cartelle condivise |
-| Qualità | golden set | **164 test** senza LLM, **MLflow** per scegliere i modelli, **DSPy** per l'interprete delle risposte |
+| Per altri programmi | server MCP (per agenti AI) | anche **API REST FastAPI** in sola lettura, con chiave e documentazione OpenAPI |
+| Qualità | golden set | **174 test** senza LLM, **MLflow** per scegliere i modelli, **DSPy** per l'interprete delle risposte |
 | Rilascio | a mano | **uv** + lock file, **Docker** multi-stadio con i test dentro, **GitHub Actions**, aggiornamento con un comando |
 
 ## Cosa fa
@@ -34,9 +35,38 @@ risconti li calcola il codice.
 Tutto il resto delle versioni precedenti resta: acquisizione da foto, PDF, vocali e testo, grafo delle bozze
 LangGraph con conferma, server MCP in sola lettura, RAG sul contenuto delle fatture.
 
+## API REST (FastAPI)
+
+Il bot è fatto per le persone; l'API (`app/api_fatture.py`) è fatta per gli altri programmi: un gestionale, un foglio
+di calcolo, una dashboard, uno script che ogni mattina scarica le scadenze. Risponde in JSON con campi fissi,
+descritti da modelli Pydantic, e pubblica da sola la documentazione OpenAPI su `/docs`, dove le chiamate si provano
+dal browser.
+
+| Chiamata | Cosa restituisce |
+|---|---|
+| `GET /fatture?testo=&stato=` | ricerca nel registro, la stessa della chat |
+| `GET /fatture/{id}` | una fattura (404 se non c'è) |
+| `GET /scadenze?entro_giorni=30` | fatture da pagare entro N giorni, le già scadute per prime |
+| `GET /riepilogo?tipo=mese&anno=2026&numero=9` | totali del periodo, per fornitore, IVA da verificare |
+| `GET /scadenziario?entro=2026-11-30` | righe non saldate dello scadenziario annuale (Excel) |
+| `GET /salute` | controllo che il servizio sia acceso (senza chiave, senza dati) |
+
+Scelte:
+- **Sola lettura**, come il server MCP: registrare, pagare e annullare restano in chat, dove una persona conferma.
+- **Chiave** nell'header `X-API-Key` (`API_CHIAVE` nel `.env`, confronto in tempo costante); senza chiave l'API è spenta.
+- **Importi in centesimi interi** come nel registro; i percorsi dei file sul server non escono mai.
+- **Stessa logica della chat**: ricerca, scadenze e totali vengono dalle stesse funzioni di `registro_fatture.py`.
+- Nel `compose.yaml` è un secondo servizio con la stessa immagine, dati montati in sola lettura e porta aperta solo
+  su `127.0.0.1`; per esporla fuori serve un proxy HTTPS davanti.
+
+```bash
+API_CHIAVE=una-chiave uv run uvicorn api_fatture:app --app-dir app --port 8000
+curl -H "X-API-Key: una-chiave" "http://127.0.0.1:8000/scadenze?entro_giorni=15"
+```
+
 ## MLOps
 
-**Test senza modello.** I 164 test (`tests/`) controllano regole e conversioni senza chiamare l'LLM e senza rete:
+**Test senza modello.** I 174 test (`tests/`) controllano regole e conversioni senza chiamare l'LLM e senza rete:
 girano in pochi secondi, sempre uguali, a ogni modifica. La qualità del modello si misura a parte (golden set).
 
 **Letture salvate.** Del modello si salva solo la risposta grezza, con una chiave che dipende da modello, istruzioni
@@ -118,7 +148,7 @@ Le regole per fornitore (rate) sono dati, non codice: `dati/regole_scadenze.json
 | Cartella | Cosa c'è |
 |---|---|
 | `app/` | il codice: `elabora_mese.py` (blocco del mese), `estratti_conto.py`, `cambi_bdi.py`, `verifica_piva.py`, `anagrafica_esteri.py`, `termini.py`, `scadenziario.py`, `ratei_risconti.py`, `bot_telegram_v2.py`, … |
-| `tests/` | 164 test senza modello e senza rete |
+| `tests/` | 174 test senza modello e senza rete |
 | `file_di_prova/`, `valutazione/` | fatture **inventate**, estratti conto finti, golden set, risultati |
 | `server/` | installazione e aggiornamento su un server Linux |
 

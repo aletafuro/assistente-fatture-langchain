@@ -61,6 +61,10 @@ MODELLO_FOTO = os.getenv("MODELLO_LETTURA_FOTO", "gpt-4.1-mini")
 MODELLO_INTERPRETE = os.getenv("MODELLO_INTERPRETE", "gpt-4o-mini")
 AZIENDA_PIVA = (os.getenv("AZIENDA_PIVA") or "").upper().removeprefix("IT") or None
 
+# API REST di sola lettura (api_fatture.py): chi la chiama deve mandare questa chiave nell'header X-API-Key.
+# Se è vuota l'API risponde solo a /salute: meglio spenta che aperta a tutti.
+API_CHIAVE = os.getenv("API_CHIAVE") or None
+
 LOG = BASE / "log"
 SEGRETI = BASE / "segreti"
 GOOGLE_CREDENZIALI = SEGRETI / "google_credenziali.json"

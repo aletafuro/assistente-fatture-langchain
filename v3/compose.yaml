@@ -1,4 +1,4 @@
-# Avvio del bot nel container, con un solo comando:   docker compose up -d
+# Avvio del bot e dell'API nel container, con un solo comando:   docker compose up -d
 # Log:   docker compose logs -f        Stop:   docker compose down
 #
 # - le impostazioni e i segreti arrivano dal file .env (non entra mai nell'immagine);
@@ -14,4 +14,24 @@ services:
     volumes:
       - ./dati:/dati
       - ./segreti:/app/segreti
+    restart: unless-stopped
+
+  # API REST di sola lettura: stessa immagine e stessi dati del bot, un altro comando.
+  # La porta è aperta solo sul computer stesso (127.0.0.1): per esporla fuori serve un proxy
+  # HTTPS davanti (es. Caddy o nginx), mai la porta nuda su internet.
+  api:
+    image: assistente-fatture:3.0
+    depends_on: [bot]                   # l'immagine la costruisce il servizio bot
+    env_file: .env
+    environment:
+      CARTELLA_DATI: /dati
+    volumes:
+      - ./dati:/dati:ro                 # :ro = sola lettura anche per il sistema operativo
+    command: ["uvicorn", "api_fatture:app", "--app-dir", "app", "--host", "0.0.0.0", "--port", "8000"]
+    ports:
+      - "127.0.0.1:8000:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/salute')"]
+      interval: 30s
+      timeout: 5s
     restart: unless-stopped

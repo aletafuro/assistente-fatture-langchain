@@ -267,8 +267,9 @@ def annulla_fattura(id_fattura: str, motivo: str) -> str:
 # CERCARE
 # ---------------------------------------------------------------------------
 
-def cerca_fatture(testo: str = "", stato: str = "tutte") -> str:
+def trova_fatture(testo: str = "", stato: str = "tutte") -> list:
     """
+    Le fatture (dizionari) che corrispondono alla ricerca: la usano sia la chat sia l'API.
     testo: filtra per fornitore o numero (vuoto = tutte).
     stato: 'tutte', 'da_pagare', 'pagata', 'annullata'.
     """
@@ -285,21 +286,36 @@ def cerca_fatture(testo: str = "", stato: str = "tutte") -> str:
             continue
         if stato in ("da_pagare", "pagata") and (f["annullata"] or f["stato_pagamento"] != stato):
             continue
-        risultati.append(_in_breve(f))
+        risultati.append(f)
+    return risultati
+
+
+def cerca_fatture(testo: str = "", stato: str = "tutte") -> str:
+    """Come trova_fatture, ma come testo per la chat (una riga per fattura)."""
+    risultati = [_in_breve(f) for f in trova_fatture(testo, stato)]
     return "\n".join(risultati) if risultati else "Nessuna fattura trovata."
+
+
+def in_scadenza(entro_giorni: int = 30, data_riferimento: Optional[str] = None) -> list:
+    """[(fattura, giorni alla scadenza)] da pagare, non annullate, entro N giorni (negativi = già scadute)."""
+    oggi = date.fromisoformat(data_riferimento) if data_riferimento else date.today()
+    elenco = []
+    for f in carica_registro():
+        if f["annullata"] or f["stato_pagamento"] == "pagata" or not f["data_scadenza"]:
+            continue
+        giorni = (date.fromisoformat(f["data_scadenza"]) - oggi).days
+        if giorni <= entro_giorni:
+            elenco.append((f, giorni))
+    return elenco
 
 
 def fatture_in_scadenza(entro_giorni: int = 30, data_riferimento: Optional[str] = None) -> str:
     """Fatture da pagare, non annullate, che scadono entro N giorni (o già scadute)."""
     oggi = date.fromisoformat(data_riferimento) if data_riferimento else date.today()
     righe = []
-    for f in carica_registro():
-        if f["annullata"] or f["stato_pagamento"] == "pagata" or not f["data_scadenza"]:
-            continue
-        giorni = (date.fromisoformat(f["data_scadenza"]) - oggi).days
-        if giorni <= entro_giorni:
-            quando = f"SCADUTA da {-giorni} giorni" if giorni < 0 else f"scade tra {giorni} giorni"
-            righe.append(f"{_in_breve(f)} -> {quando}")
+    for f, giorni in in_scadenza(entro_giorni, oggi.isoformat()):
+        quando = f"SCADUTA da {-giorni} giorni" if giorni < 0 else f"scade tra {giorni} giorni"
+        righe.append(f"{_in_breve(f)} -> {quando}")
     senza_data = [f["id"] for f in carica_registro()
                   if not f["annullata"] and f["stato_pagamento"] != "pagata" and not f["data_scadenza"]]
     testo = "\n".join(righe) if righe else f"Nessuna fattura in scadenza entro {entro_giorni} giorni."
@@ -337,32 +353,38 @@ def fatture_del_periodo(tipo: str, anno: int, numero: Optional[int] = None) -> l
 def riepilogo(tipo: str, anno: int, numero: Optional[int] = None) -> str:
     if tipo not in ("mese", "trimestre", "anno"):
         return "Tipo di periodo non valido: usa 'mese', 'trimestre' o 'anno'."
-    fatture = fatture_del_periodo(tipo, anno, numero)
+    t = totali_del_periodo(tipo, anno, numero)
     nome = {"mese": f"mese {numero}/{anno}", "trimestre": f"trimestre {numero} del {anno}", "anno": f"anno {anno}"}[tipo]
-    if not fatture:
+    if not t["numero_fatture"]:
         return f"Riepilogo {nome}: nessuna fattura attiva."
+    righe = [
+        f"Riepilogo {nome}: {t['numero_fatture']} fatture attive",
+        f"  Imponibile: {centesimi_in_euro(t['imponibile_cent'])}",
+        f"  IVA:        {centesimi_in_euro(t['iva_cent'])}",
+        f"  Totale:     {centesimi_in_euro(t['totale_cent'])}",
+        f"  Ancora da pagare: {centesimi_in_euro(t['da_pagare_cent'])}",
+        "  Per fornitore:",
+    ]
+    for nome_fornitore, tot in t["per_fornitore_cent"].items():
+        righe.append(f"    - {nome_fornitore}: {centesimi_in_euro(tot)}")
+    if t["iva_da_verificare"]:
+        righe.append(f"  IVA non ordinaria da verificare: {', '.join(t['iva_da_verificare'])}")
+    return "\n".join(righe)
 
+
+def totali_del_periodo(tipo: str, anno: int, numero: Optional[int] = None) -> dict:
+    """I numeri del riepilogo (per la chat e per l'API): totali in centesimi, fornitori dal più costoso."""
+    fatture = fatture_del_periodo(tipo, anno, numero)
     # I totali si sommano in CENTESIMI INTERI: esatti al centesimo, sempre.
-    imponibile = sum(f["imponibile_cent"] or 0 for f in fatture)
-    iva = sum(f["iva_cent"] or 0 for f in fatture)
-    totale = sum(f["totale_cent"] or 0 for f in fatture)
-    da_pagare = sum(f["totale_cent"] or 0 for f in fatture if f["stato_pagamento"] == "da_pagare")
-    non_ordinarie = [f["id"] for f in fatture if f["regime_iva"] != "ordinario"]
-
     per_fornitore = {}
     for f in fatture:
         per_fornitore[f["fornitore"]] = per_fornitore.get(f["fornitore"], 0) + (f["totale_cent"] or 0)
-
-    righe = [
-        f"Riepilogo {nome}: {len(fatture)} fatture attive",
-        f"  Imponibile: {centesimi_in_euro(imponibile)}",
-        f"  IVA:        {centesimi_in_euro(iva)}",
-        f"  Totale:     {centesimi_in_euro(totale)}",
-        f"  Ancora da pagare: {centesimi_in_euro(da_pagare)}",
-        "  Per fornitore:",
-    ]
-    for nome_fornitore, tot in sorted(per_fornitore.items(), key=lambda x: -x[1]):
-        righe.append(f"    - {nome_fornitore}: {centesimi_in_euro(tot)}")
-    if non_ordinarie:
-        righe.append(f"  IVA non ordinaria da verificare: {', '.join(non_ordinarie)}")
-    return "\n".join(righe)
+    return {
+        "numero_fatture": len(fatture),
+        "imponibile_cent": sum(f["imponibile_cent"] or 0 for f in fatture),
+        "iva_cent": sum(f["iva_cent"] or 0 for f in fatture),
+        "totale_cent": sum(f["totale_cent"] or 0 for f in fatture),
+        "da_pagare_cent": sum(f["totale_cent"] or 0 for f in fatture if f["stato_pagamento"] == "da_pagare"),
+        "per_fornitore_cent": dict(sorted(per_fornitore.items(), key=lambda x: -x[1])),
+        "iva_da_verificare": [f["id"] for f in fatture if f["regime_iva"] != "ordinario"],
+    }
