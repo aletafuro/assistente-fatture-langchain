@@ -19,6 +19,8 @@ os.environ["AZIENDA_NOME"] = "Studio Prova S.r.l."
 os.environ["AZIENDA_PIVA"] = "IT01234567897"
 os.environ.setdefault("OPENAI_API_KEY", "sk-test-non-valida")   # i client si creano, ma nessuno li chiama
 os.environ["AVVISI_CANALI"] = ""                                  # nessun avviso vero durante i test
+os.environ["LANGFUSE_PUBLIC_KEY"] = os.environ["LANGFUSE_SECRET_KEY"] = ""   # nessuna traccia su Langfuse
+os.environ["RAG_INDICE"] = "memoria"                              # pgvector solo nel suo test (test_indice_rag)
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "app"))
 

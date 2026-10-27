@@ -123,12 +123,12 @@ RAG deve dirlo. Due livelli di misura:
 | Indice | hit@4 | recall@4 | MRR | faithfulness | context recall | context precision | factual correctness | answer relevancy |
 |---|---|---|---|---|---|---|---|---|
 | in memoria | 1,00 | 1,00 | 0,92 | 0,95 | 1,00 | 0,87 | 0,61 | 0,78 |
-| **pgvector** | 1,00 | 1,00 | 0,92 | 0,99 | 1,00 | 0,87 | 0,57 | 0,77 |
+| **pgvector** | 1,00 | 1,00 | 0,92 | 0,98 | 1,00 | 0,87 | 0,58 | 0,78 |
 
 Cosa dicono i numeri:
 - **pgvector non cambia la qualità**: stesse fatture, nello stesso ordine, in 16 domande su 16. Cambia dove vive
   l'indice: resta salvato, all'avvio si calcolano gli embedding solo delle fatture nuove, regge migliaia di documenti.
-- Le differenze di RAGAS tra le due righe (0,95 / 0,99) sono **rumore del giudice**: la ricerca è identica e 12 risposte
+- Le differenze di RAGAS tra le due righe (0,95 / 0,98) sono **rumore del giudice**: la ricerca è identica e 12 risposte
   su 16 sono uguali parola per parola. Prima di dire che una modifica migliora qualcosa, la differenza deve superare
   questo rumore.
 - `factual_correctness` è bassa perché le risposte giuste del golden set hanno più dettagli (quantità, importi) di
